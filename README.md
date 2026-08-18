@@ -36,7 +36,9 @@ Une manette standard et des commandes tactiles sont également prises en charge.
 - préparation du départ, de l'heure, de la météo et du carburant ;
 - modèle de vol accessible avec vitesse, altitude, cap, roulis, tangage et carburant ;
 - pilote automatique, trois caméras, HUD et détection d'atterrissage ;
-- carte OpenStreetMap avec rendu de secours si les tuiles sont indisponibles ;
+- terrain WebGL réellement tridimensionnel, relief volontairement accentué et caméra liée à l'avion ;
+- mosaïque satellite Sentinel-2 EOxCloudless et modèle d'élévation Mapterhorn, sans clé API ;
+- carte OpenStreetMap de secours si WebGL ou les services 3D sont indisponibles ;
 - responsive design, clavier, tactile et Gamepad API ;
 - aucune clé API, aucun backend et aucune donnée envoyée par le jeu.
 
@@ -50,4 +52,4 @@ Les spécifications et critères d'acceptation se trouvent dans [`doc/SPECIFICAT
 
 ## Cartographie et licence
 
-Les tuiles sont fournies par OpenStreetMap et restent soumises à ses conditions d'utilisation. Le code du projet est distribué sous licence MIT.
+Le rendu 3D utilise MapLibre GL JS, le relief Mapterhorn et la mosaïque EOxCloudless issue de données Copernicus Sentinel 2025. La carte de secours utilise OpenStreetMap. Ces sources restent soumises à leurs licences et attributions respectives ; le code du projet est distribué sous licence MIT.

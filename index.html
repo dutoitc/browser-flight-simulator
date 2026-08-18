@@ -10,6 +10,9 @@
     />
     <title>AEROLINE — Browser Flight Simulator</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://tiles.maps.eox.at" />
+    <link rel="preconnect" href="https://tiles.mapterhorn.com" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.4.1/dist/maplibre-gl.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -129,9 +132,12 @@
           </aside>
 
           <div class="map-card">
-            <canvas id="preview-map" aria-label="Carte de la destination sélectionnée"></canvas>
+            <div class="terrain-map" id="preview-map" aria-label="Carte 3D de la destination sélectionnée">
+              <canvas id="preview-map-fallback"></canvas>
+              <div class="webgl-map" id="preview-map-webgl"></div>
+            </div>
             <div class="map-vignette" aria-hidden="true"></div>
-            <p class="map-credit">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors</p>
+            <p class="map-credit">Cartographie 3D · <a href="https://www.maplibre.org/" target="_blank" rel="noreferrer">MapLibre</a></p>
             <form class="search-box" id="destination-form" role="search">
               <label class="sr-only" for="destination-search">Destination ou coordonnées</label>
               <span aria-hidden="true">⌕</span>
@@ -204,7 +210,12 @@
       <section class="screen screen-flight" id="screen-flight" aria-label="Simulateur de vol">
         <div class="flight-stage" id="flight-stage" data-time="12" data-weather="scattered">
           <div class="sky-layer" aria-hidden="true"><span class="cloud cloud-a"></span><span class="cloud cloud-b"></span></div>
-          <div class="ground-plane"><canvas id="flight-map"></canvas></div>
+          <div class="ground-plane">
+            <div class="terrain-map" id="flight-map" aria-label="Terrain 3D du vol">
+              <canvas id="flight-map-fallback"></canvas>
+              <div class="webgl-map" id="flight-map-webgl"></div>
+            </div>
+          </div>
           <div class="ground-shade" aria-hidden="true"></div>
 
           <div class="flight-topbar hud-element">

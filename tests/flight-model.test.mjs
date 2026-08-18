@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { FlightModel, shortestAngle } from "../src/flight-model.js";
+import { terrainZoomForAltitude } from "../src/terrain-renderer.js";
 
 const advance = (model, seconds, controls = {}) => {
   for (let elapsed = 0; elapsed < seconds; elapsed += 0.1) model.step(0.1, controls);
@@ -76,4 +77,10 @@ test("la position et le carburant évoluent pendant le vol", () => {
   assert.notEqual(state.lon, 6.6);
   assert.ok(state.distanceNm > 0);
   assert.ok(state.fuel < 60);
+});
+
+test("la caméra 3D élargit le champ de vision avec l'altitude", () => {
+  assert.ok(terrainZoomForAltitude(100) > terrainZoomForAltitude(2500));
+  assert.ok(terrainZoomForAltitude(2500) > terrainZoomForAltitude(12000));
+  assert.equal(terrainZoomForAltitude(2200, true), 11.8);
 });

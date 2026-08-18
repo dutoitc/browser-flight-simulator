@@ -1,6 +1,6 @@
 import { DESTINATIONS, formatCoordinates, parseCoordinates, searchDestinations } from "./destinations.js";
 import { clamp, FlightModel } from "./flight-model.js";
-import { MapRenderer } from "./map-renderer.js";
+import { TerrainRenderer } from "./terrain-renderer.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -48,8 +48,8 @@ let flightCommitted = false;
 let lastEventRevision = 0;
 let messageTimer = 0;
 
-const previewRenderer = new MapRenderer($("#preview-map"), { preview: true });
-const flightRenderer = new MapRenderer($("#flight-map"));
+const previewRenderer = new TerrainRenderer($("#preview-map-webgl"), $("#preview-map-fallback"), { preview: true });
+const flightRenderer = new TerrainRenderer($("#flight-map-webgl"), $("#flight-map-fallback"));
 
 init();
 
@@ -266,6 +266,7 @@ function startFlight() {
   stage.dataset.time = String(settings.time);
   stage.dataset.weather = settings.weather;
   stage.dataset.camera = "chase";
+  flightRenderer.setCameraMode("chase");
   stage.classList.remove("is-paused", "is-hud-hidden");
   $("#pause-button").textContent = "Ⅱ";
   $("#autopilot-button").setAttribute("aria-pressed", "false");
@@ -441,6 +442,7 @@ function changeCamera() {
   const cameras = ["chase", "cockpit", "top"];
   cameraMode = (cameraMode + 1) % cameras.length;
   $("#flight-stage").dataset.camera = cameras[cameraMode];
+  flightRenderer.setCameraMode(cameras[cameraMode]);
   showMessage({ chase: "Caméra poursuite", cockpit: "Vue cockpit", top: "Vue tactique" }[cameras[cameraMode]]);
 }
 
