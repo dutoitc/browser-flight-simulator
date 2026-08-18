@@ -401,6 +401,7 @@ function renderFlight(state, renderMap = false) {
 
   const plane = $("#aircraft-view");
   plane.style.transform = `translate(-50%, -50%) translateY(${state.pitch * 0.65}px) rotate(${state.roll * 0.72}deg)`;
+  plane.style.setProperty("--prop-speed", `${(0.055 + (1 - state.throttle) * 0.13).toFixed(3)}s`);
   $("#attitude-ball").style.transform = `rotate(${-state.roll}deg) translateY(${state.pitch * 1.5}px)`;
 
   if (renderMap) flightRenderer.render(state);

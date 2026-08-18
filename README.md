@@ -35,6 +35,7 @@ Une manette standard et des commandes tactiles sont également prises en charge.
 - douze destinations et coordonnées personnalisées ;
 - préparation du départ, de l'heure, de la météo et du carburant ;
 - modèle de vol accessible avec vitesse, altitude, cap, roulis, tangage et carburant ;
+- AL-182 détaillé en vue poursuite et en vue verticale, avec train fixe et hélice liée à la puissance ;
 - pilote automatique, trois caméras, HUD et détection d'atterrissage ;
 - terrain WebGL réellement tridimensionnel, relief volontairement accentué et caméra liée à l'avion ;
 - mosaïque satellite Sentinel-2 EOxCloudless et modèle d'élévation Mapterhorn, sans clé API ;

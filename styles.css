@@ -354,13 +354,44 @@ body.is-flying .topbar { display: none; }
 .instrument-mini { display: flex; justify-content: space-between; gap: .6rem; padding: .3rem .35rem; font-size: .48rem; }
 .instrument-mini span { color: #d1e6eb; }
 .instrument-mini b { color: #fff; }
-.aircraft-view { position: absolute; z-index: 2; top: 49%; left: 50%; width: clamp(11rem, 18vw, 18rem); transform: translate(-50%, -50%) rotate(0deg); transform-origin: center 58%; transition: top .4s ease, width .4s ease; filter: drop-shadow(0 17px 10px rgba(0,0,0,.34)); }
-.aircraft-view svg { display: block; width: 100%; overflow: visible; }
-.plane-shadow { fill: rgba(0,0,0,.25); transform: translate(4px, 9px); filter: blur(2px); }
-.plane-body { fill: url(#planeFill); stroke: rgba(31,65,78,.6); stroke-width: 1; }
-.plane-accent { fill: #e33d3d; }
-.flight-stage[data-camera="cockpit"] .aircraft-view { top: 105%; width: 35rem; }
-.flight-stage[data-camera="top"] .aircraft-view { top: 50%; width: 9rem; }
+.aircraft-view { --prop-speed: .1s; position: absolute; z-index: 2; top: 52%; left: 50%; width: clamp(17rem, 27vw, 29rem); transform: translate(-50%, -50%); transform-origin: center 58%; transition: top .4s ease, width .4s ease, opacity .25s ease; filter: drop-shadow(0 16px 12px rgba(0,0,0,.32)); }
+.aircraft-model { display: block; width: 100%; overflow: visible; }
+.aircraft-top { display: none; }
+.aircraft-cast-shadow { fill: rgba(0, 6, 11, .22); filter: blur(9px); transform: translateY(8px) scale(.92); transform-origin: center; }
+.propeller-disc { fill: rgba(196, 229, 239, .16); stroke: rgba(235, 250, 255, .24); stroke-width: 1; filter: blur(1px); }
+.propeller { fill: #d7e2e7; stroke: #5f7480; stroke-width: 1; transform-box: view-box; transform-origin: 210px 35px; animation: propeller-spin var(--prop-speed) linear infinite; }
+.propeller circle { fill: #dfe8eb; stroke: #647985; }
+@keyframes propeller-spin { to { transform: rotate(360deg); } }
+.tail-fin, .fuselage { fill: url(#chaseBody); stroke: #526a77; stroke-width: 1.2; }
+.tail-fin-accent, .tailplane-accent, .fuselage-stripe, .wing-accent { fill: #d92f38; }
+.tailplane, .main-wing { fill: url(#chaseWing); stroke: #607985; stroke-width: 1.1; }
+.underside { fill: #718894; stroke: #485d68; }
+.fuselage-highlight { fill: rgba(255,255,255,.38); }
+.cockpit-glass { fill: url(#chaseGlass); stroke: #233d4a; stroke-width: 1.4; }
+.cockpit-frame { fill: none; stroke: rgba(221,240,247,.65); stroke-width: 1.4; }
+.engine-cowl { fill: #f1f5f6; stroke: #5f7681; stroke-width: 1; }
+.spinner { fill: #cbd8de; stroke: #536a76; stroke-width: 1; }
+.gear-strut { fill: none; stroke: #c7d5da; stroke-width: 4; stroke-linecap: round; }
+.wheel { fill: #111920; stroke: #64747c; stroke-width: 2; }
+.wheel-hub { fill: #a9bbc3; }
+.aileron-line { fill: none; stroke: rgba(48,70,80,.55); stroke-width: 1.2; }
+.wing-strut { fill: none; stroke: rgba(24,39,47,.66); stroke-width: 5; stroke-linecap: round; }
+.wing-strut-light { fill: none; stroke: rgba(221,235,239,.72); stroke-width: 1.4; stroke-linecap: round; }
+.nav-light { filter: url(#navGlow); }
+.nav-red { fill: #ff2b3c; }
+.nav-green { fill: #31ffae; }
+.aircraft-registration { fill: #253e49; font: 700 8px Inter, sans-serif; letter-spacing: 1px; transform: rotate(4deg); transform-origin: 282px 102px; }
+.top-propeller { fill: #d7e2e7; stroke: #5f7480; transform-box: view-box; transform-origin: 130px 29px; animation: propeller-spin var(--prop-speed) linear infinite; }
+.top-propeller circle { fill: #dfe8eb; }
+.top-fuselage { fill: url(#topBody); stroke: #536b77; stroke-width: 1.2; }
+.top-cockpit { fill: #173341; stroke: #9cc8d7; stroke-width: 1; }
+.top-main-wing, .top-tailplane { fill: url(#topWing); stroke: #5d7480; stroke-width: 1.1; }
+.top-tail-fin { fill: #c9d6dc; stroke: #536b77; }
+.top-wing-accent, .top-fuselage-stripe { fill: #d92f38; }
+.flight-stage[data-camera="cockpit"] .aircraft-view { top: 58%; opacity: 0; }
+.flight-stage[data-camera="top"] .aircraft-view { top: 50%; width: 13rem; }
+.flight-stage[data-camera="top"] .aircraft-chase { display: none; }
+.flight-stage[data-camera="top"] .aircraft-top { display: block; }
 .attitude { position: absolute; z-index: 4; bottom: 4rem; left: 50%; width: 5.4rem; height: 5.4rem; overflow: hidden; background: rgba(4,18,27,.6); border: 2px solid rgba(225,246,250,.7); border-radius: 50%; box-shadow: 0 8px 28px rgba(0,0,0,.25); transform: translateX(-50%); backdrop-filter: blur(6px); }
 .attitude-ball { position: absolute; inset: -35%; background: linear-gradient(#348fc2 0 49.5%, #e7b163 50.5% 100%); transition: transform 80ms linear; }
 .attitude-horizon { position: absolute; top: 50%; right: 0; left: 0; height: 1px; background: white; box-shadow: 0 -12px 0 -0.25px rgba(255,255,255,.7), 0 12px 0 -0.25px rgba(255,255,255,.7); }
@@ -471,7 +502,7 @@ dialog::backdrop { background: rgba(0,5,10,.78); backdrop-filter: blur(5px); }
   .destination-pin { top: 5.5rem; }
   .flight-setup { padding: .8rem; }
   .instrument-stack { top: 18%; }
-  .aircraft-view { width: 9rem; }
+  .aircraft-view { width: 13rem; }
   .result-dialog dl { grid-template-columns: 1fr; }
   .dialog-actions { flex-direction: column; }
   .controls-grid { grid-template-columns: 1fr; }
