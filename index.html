@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#06101f" />
+    <meta
+      name="description"
+      content="AEROLINE, un simulateur de vol léger et jouable directement dans le navigateur."
+    />
+    <title>AEROLINE — Browser Flight Simulator</title>
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Aller au contenu</a>
+
+    <header class="topbar" id="topbar">
+      <button class="brand" data-screen-target="home" aria-label="Accueil AEROLINE">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 32" role="img">
+            <path d="M3 22 27 5l7 1-8 12 19-8 10 3-22 12-11-1-7 5H5l7-7z" />
+          </svg>
+        </span>
+        <span><b>AEROLINE</b><small>FLIGHT SIM</small></span>
+      </button>
+
+      <nav class="main-nav" aria-label="Navigation principale">
+        <button class="nav-link is-active" data-screen-target="home">Accueil</button>
+        <button class="nav-link" data-screen-target="explore">Explorer</button>
+        <button class="nav-link" data-screen-target="flight">Vol</button>
+      </nav>
+
+      <div class="pilot-chip" aria-label="Statistiques du pilote">
+        <span class="pilot-dot"></span>
+        <span><b id="header-rank">Élève pilote</b><small id="header-hours">0 min de vol</small></span>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="screen screen-home is-active" id="screen-home" aria-labelledby="home-title">
+        <div class="home-aurora" aria-hidden="true"></div>
+        <div class="home-grid">
+          <article class="hero-panel">
+            <p class="eyebrow">PILOT HOME</p>
+            <h1 id="home-title">Le ciel est à toi.</h1>
+            <p class="hero-copy">
+              Choisis un point sur Terre, prépare ton appareil et décolle. Aucun téléchargement,
+              aucune clé API — seulement le vol.
+            </p>
+            <div class="hero-actions">
+              <button class="button button-primary" data-screen-target="explore">
+                <span aria-hidden="true">✈</span> Choisir un vol
+              </button>
+              <button class="button button-secondary" id="quick-flight">Vol immédiat</button>
+            </div>
+            <dl class="hero-metrics">
+              <div><dt id="metric-distance">0</dt><dd>km parcourus</dd></div>
+              <div><dt id="metric-landings">0</dt><dd>atterrissages</dd></div>
+              <div><dt id="metric-best">—</dt><dd>meilleur vol</dd></div>
+            </dl>
+          </article>
+
+          <aside class="progress-panel glass-panel" aria-labelledby="progress-title">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">CARNET DE VOL</p>
+                <h2 id="progress-title">Progression pilote</h2>
+              </div>
+              <span class="status-pill">LOCAL</span>
+            </div>
+            <div class="rank-row">
+              <div class="rank-icon">✈</div>
+              <div class="rank-copy">
+                <strong id="progress-rank">Élève pilote</strong>
+                <span id="progress-next">Premier atterrissage à réussir</span>
+              </div>
+            </div>
+            <div class="progress-track" aria-hidden="true"><span id="rank-progress"></span></div>
+            <div class="achievement-list">
+              <div><span class="achievement-icon">01</span><p><b>Premier départ</b><small>Lancer un vol libre</small></p><em id="badge-flight">À FAIRE</em></div>
+              <div><span class="achievement-icon">02</span><p><b>Atterrissage doux</b><small>Se poser sans dommage</small></p><em id="badge-landing">À FAIRE</em></div>
+              <div><span class="achievement-icon">03</span><p><b>Explorateur</b><small>Parcourir 25 km</small></p><em id="badge-distance">À FAIRE</em></div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="training-strip" aria-labelledby="training-title">
+          <div>
+            <p class="eyebrow">MISSION CONSEILLÉE</p>
+            <h2 id="training-title">Maîtriser les commandes de base</h2>
+            <p>Maintiens une altitude stable, effectue un virage puis pose l'appareil en douceur.</p>
+          </div>
+          <div class="training-progress">
+            <span><b id="training-count">0 / 3</b> objectifs</span>
+            <div class="progress-track"><span id="training-progress"></span></div>
+          </div>
+          <button class="button button-compact" data-screen-target="explore">Commencer</button>
+        </section>
+      </section>
+
+      <section class="screen screen-explore" id="screen-explore" aria-labelledby="explore-title">
+        <div class="explore-heading">
+          <div>
+            <p class="eyebrow">EXPLORE</p>
+            <h1 id="explore-title">Vole <span>partout</span> sur Terre</h1>
+            <p>Recherche une ville ou saisis des coordonnées, puis prépare ton vol.</p>
+          </div>
+          <button class="button button-secondary controls-help">Commandes <kbd>?</kbd></button>
+        </div>
+
+        <div class="explore-layout">
+          <aside class="aircraft-card glass-panel">
+            <div class="aircraft-orbit" aria-hidden="true">
+              <svg viewBox="0 0 220 120">
+                <ellipse cx="110" cy="72" rx="82" ry="28" />
+                <path d="M32 63 101 53l36-37 13 3-13 35 48 8 8 10-56 2-17 29-13-1 9-29-61 2z" />
+              </svg>
+            </div>
+            <p class="eyebrow">APPAREIL</p>
+            <h2>AL-182 Skylane</h2>
+            <p class="muted">Monomoteur · pilotage accessible</p>
+            <div class="aircraft-stats">
+              <div><span>Vitesse croisière</span><b>124 kt</b></div>
+              <div><span>Puissance</span><b>180 hp</b></div>
+              <div><span>Autonomie</span><b>5.2 h</b></div>
+              <div><span>Plafond</span><b>14 000 ft</b></div>
+            </div>
+          </aside>
+
+          <div class="map-card">
+            <canvas id="preview-map" aria-label="Carte de la destination sélectionnée"></canvas>
+            <div class="map-vignette" aria-hidden="true"></div>
+            <p class="map-credit">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors</p>
+            <form class="search-box" id="destination-form" role="search">
+              <label class="sr-only" for="destination-search">Destination ou coordonnées</label>
+              <span aria-hidden="true">⌕</span>
+              <input
+                id="destination-search"
+                type="search"
+                autocomplete="off"
+                placeholder="Ville ou coordonnées : 46.52, 6.63"
+              />
+              <kbd>↵</kbd>
+              <div class="search-results" id="search-results" hidden></div>
+            </form>
+
+            <div class="destination-pin" aria-live="polite">
+              <span class="pin-pulse"></span>
+              <div><small>DESTINATION</small><b id="selected-city">Lausanne</b><em id="selected-coords">46.5197° N · 6.6323° E</em></div>
+            </div>
+
+            <section class="flight-setup glass-panel" aria-labelledby="setup-title">
+              <div class="setup-heading">
+                <div><p class="eyebrow">FLIGHT SETUP</p><h2 id="setup-title">Préparer le vol</h2></div>
+                <span id="setup-summary">12:00 · Épars</span>
+              </div>
+              <div class="setup-grid">
+                <fieldset>
+                  <legend>Départ</legend>
+                  <div class="segmented" data-setting="startMode">
+                    <button type="button" class="is-selected" data-value="airborne">En vol</button>
+                    <button type="button" data-value="runway">Piste</button>
+                    <button type="button" data-value="parking">Parking</button>
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>Heure</legend>
+                  <select id="time-select">
+                    <option value="6">06:00</option>
+                    <option value="12" selected>12:00</option>
+                    <option value="18">18:00</option>
+                    <option value="23">23:00</option>
+                  </select>
+                </fieldset>
+                <fieldset>
+                  <legend>Météo</legend>
+                  <div class="segmented" data-setting="weather">
+                    <button type="button" data-value="clear">Clair</button>
+                    <button type="button" class="is-selected" data-value="scattered">Épars</button>
+                    <button type="button" data-value="windy">Vent</button>
+                  </div>
+                </fieldset>
+              </div>
+              <label class="fuel-control" for="fuel-range">
+                <span><b id="fuel-label">72 % de carburant</b><small id="fuel-range-label">≈ 3 h 45 d'autonomie</small></span>
+                <input id="fuel-range" type="range" min="20" max="100" value="72" />
+              </label>
+              <div class="setup-actions">
+                <button class="button button-primary button-takeoff" id="takeoff-button" type="button">✈ Décoller</button>
+                <button class="button button-secondary" id="share-button" type="button">Copier le vol</button>
+              </div>
+            </section>
+          </div>
+
+          <aside class="destinations-panel glass-panel">
+            <div class="panel-heading"><div><p class="eyebrow">DESTINATIONS</p><h2>Les plus visitées</h2></div><span>12</span></div>
+            <ol id="destination-list"></ol>
+            <p class="osm-credit">Cartographie © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen screen-flight" id="screen-flight" aria-label="Simulateur de vol">
+        <div class="flight-stage" id="flight-stage" data-time="12" data-weather="scattered">
+          <div class="sky-layer" aria-hidden="true"><span class="cloud cloud-a"></span><span class="cloud cloud-b"></span></div>
+          <div class="ground-plane"><canvas id="flight-map"></canvas></div>
+          <div class="ground-shade" aria-hidden="true"></div>
+
+          <div class="flight-topbar hud-element">
+            <button class="hud-button" id="exit-flight">← Quitter</button>
+            <div class="compass" aria-label="Cap actuel">
+              <span>W</span><span>NW</span><span>N</span><span>NE</span><span>E</span>
+              <b id="heading-value">000°</b>
+            </div>
+            <div class="flight-actions">
+              <button class="hud-button" id="autopilot-button" aria-pressed="false">AP</button>
+              <button class="hud-button" id="camera-button">CAM</button>
+              <button class="hud-button" id="pause-button">Ⅱ</button>
+            </div>
+          </div>
+
+          <aside class="instrument-stack instrument-left hud-element" aria-label="Vitesse et altitude">
+            <div class="instrument"><small>VITESSE</small><b id="speed-value">105</b><em>KT</em></div>
+            <div class="instrument"><small>ALTITUDE</small><b id="altitude-value">2 200</b><em>FT</em></div>
+            <div class="instrument-mini"><span>VARIO</span><b id="vertical-value">+0 ft/min</b></div>
+            <div class="instrument-mini"><span>DISTANCE</span><b id="distance-value">0.0 km</b></div>
+          </aside>
+
+          <aside class="instrument-stack instrument-right hud-element" aria-label="Cap et moteur">
+            <div class="instrument"><small>CAP</small><b id="heading-side-value">000</b><em>DEG</em></div>
+            <div class="instrument"><small>PUISSANCE</small><b id="throttle-value">72</b><em>%</em></div>
+            <div class="instrument-mini"><span>CARBURANT</span><b id="flight-fuel-value">72 %</b></div>
+            <div class="instrument-mini"><span>STATUT</span><b id="flight-status">EN VOL</b></div>
+          </aside>
+
+          <div class="aircraft-view" id="aircraft-view" aria-hidden="true">
+            <svg viewBox="0 0 260 150">
+              <defs><linearGradient id="planeFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#a8bfd0"/></linearGradient></defs>
+              <path class="plane-shadow" d="M25 93 112 78l12-57 14-2 8 57 88 17 7 15-94-4-17 30-13-1-2-29-84 4z" />
+              <path class="plane-body" d="M25 88 112 73l12-57 14-2 8 57 88 17 7 15-94-4-17 30-13-1-2-29-84 4z" />
+              <path class="plane-accent" d="m29 88 83-15 2 9-76 15zm118-17 87 17 3 8-91-15z" />
+            </svg>
+          </div>
+
+          <div class="attitude hud-element" aria-label="Horizon artificiel">
+            <div class="attitude-ball" id="attitude-ball"><span class="attitude-horizon"></span></div>
+            <span class="attitude-wings">— ◇ —</span>
+          </div>
+
+          <div class="flight-footer hud-element">
+            <span id="location-value">Lausanne · 46.520, 6.632</span>
+            <span>← → roulis · ↑ ↓ tangage · W/S puissance · A pilote auto · P pause</span>
+            <span>© OpenStreetMap contributors</span>
+          </div>
+
+          <div class="touch-controls" aria-label="Commandes tactiles">
+            <div class="touch-pad">
+              <button data-control="pitchUp" aria-label="Cabrer">↑</button>
+              <button data-control="rollLeft" aria-label="Virer à gauche">←</button>
+              <button data-control="pitchDown" aria-label="Piquer">↓</button>
+              <button data-control="rollRight" aria-label="Virer à droite">→</button>
+            </div>
+            <div class="touch-throttle">
+              <button data-control="throttleUp" aria-label="Augmenter la puissance">+</button>
+              <span>GAZ</span>
+              <button data-control="throttleDown" aria-label="Réduire la puissance">−</button>
+            </div>
+          </div>
+
+          <div class="briefing-overlay" id="briefing-overlay" aria-live="polite">
+            <p class="eyebrow">EXPLORE</p>
+            <h1 id="briefing-city">Lausanne</h1>
+            <div class="briefing-card glass-panel">
+              <div class="briefing-plane" aria-hidden="true">✈</div>
+              <p id="briefing-copy">Vol libre au-dessus de Lausanne. Prends de l'altitude et explore la région.</p>
+              <dl>
+                <div><dt>Départ</dt><dd id="briefing-start">En vol</dd></div>
+                <div><dt>Heure</dt><dd id="briefing-time">12:00</dd></div>
+                <div><dt>Météo</dt><dd id="briefing-weather">Épars</dd></div>
+                <div><dt>Carburant</dt><dd id="briefing-fuel">72 %</dd></div>
+              </dl>
+              <span class="loading-line"><i></i></span>
+              <small>Initialisation des instruments…</small>
+            </div>
+          </div>
+
+          <div class="flight-message" id="flight-message" role="status" aria-live="polite"></div>
+
+          <dialog class="result-dialog" id="result-dialog">
+            <p class="eyebrow" id="result-eyebrow">VOL TERMINÉ</p>
+            <h2 id="result-title">Atterrissage réussi</h2>
+            <p id="result-copy"></p>
+            <dl>
+              <div><dt>Distance</dt><dd id="result-distance">0 km</dd></div>
+              <div><dt>Durée</dt><dd id="result-duration">0 min</dd></div>
+              <div><dt>Impact</dt><dd id="result-impact">0 ft/min</dd></div>
+            </dl>
+            <div class="dialog-actions">
+              <button class="button button-primary" id="retry-button">Recommencer</button>
+              <button class="button button-secondary" id="result-exit">Retour à l'accueil</button>
+            </div>
+          </dialog>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="help-dialog" id="help-dialog">
+      <button class="dialog-close" aria-label="Fermer">×</button>
+      <p class="eyebrow">FLIGHT MANUAL</p>
+      <h2>Commandes</h2>
+      <div class="controls-grid">
+        <div><kbd>←</kbd><kbd>→</kbd><span>Roulis et virage</span></div>
+        <div><kbd>↑</kbd><kbd>↓</kbd><span>Tangage</span></div>
+        <div><kbd>W</kbd><kbd>S</kbd><span>Puissance moteur</span></div>
+        <div><kbd>A</kbd><span>Pilote automatique</span></div>
+        <div><kbd>C</kbd><span>Changer de caméra</span></div>
+        <div><kbd>P</kbd><span>Pause / reprendre</span></div>
+        <div><kbd>H</kbd><span>Masquer le HUD</span></div>
+        <div><kbd>R</kbd><span>Recentrer l'appareil</span></div>
+      </div>
+      <p>Une manette standard est aussi reconnue : stick gauche pour piloter, gâchettes pour la puissance.</p>
+    </dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
