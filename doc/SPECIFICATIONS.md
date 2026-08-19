@@ -19,7 +19,8 @@ Le projet doit rester simple à héberger sur GitHub Pages : HTML, CSS et JavaSc
 - Proposer plusieurs destinations prédéfinies, dont Lausanne, Dubai, New York et Tokyo.
 - Rechercher une destination locale par nom ou saisir directement des coordonnées `latitude, longitude`.
 - Afficher la destination sélectionnée et ses coordonnées sur une carte de préparation.
-- Choisir l'heure, la météo, le carburant et le mode de départ.
+- Choisir l'appareil, l'heure, la météo, le carburant et le mode de départ.
+- Proposer un monomoteur accessible, un turbopropulseur rapide et un jet léger, chacun avec ses performances.
 
 ### 3. Simulation de vol
 
@@ -28,6 +29,7 @@ Le projet doit rester simple à héberger sur GitHub Pages : HTML, CSS et JavaSc
 - Gérer les commandes au clavier, les boutons tactiles et une manette compatible Gamepad API.
 - Proposer pause, recentrage, changement de caméra, masquage du HUD et pilote automatique.
 - Détecter un atterrissage réussi ou un crash selon la vitesse verticale et l'inclinaison.
+- Afficher l'appareil comme un volume 3D éclairé avec fuselage, ailes, cockpit, propulsion, feux et train tricycle cohérent.
 
 ### 4. Interface
 
@@ -53,6 +55,8 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 - `styles.css` : identité visuelle et responsive design.
 - `src/app.js` : navigation, stockage local et orchestration.
 - `src/flight-model.js` : modèle de vol déterministe et testable.
+- `src/aircrafts.js` : catalogue et performances des trois appareils.
+- `src/aircraft-renderer.js` : modèles 3D procéduraux Three.js, animation et train d'atterrissage.
 - `src/map-renderer.js` : rendu cartographique et cache des tuiles.
 - `src/terrain-renderer.js` : terrain WebGL, relief plafonné à ×1,2, caméra liée à l'altitude, satellite et repli cartographique.
 - `src/destinations.js` : catalogue local et recherche par coordonnées.
@@ -79,14 +83,18 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 8. Les statistiques de vol persistent après rechargement de la page.
 9. Le rendu conserve une solution de repli utilisable sans tuiles cartographiques.
 10. Les tests unitaires du modèle de vol passent avec `node --test`.
-11. Le dépôt contient exactement trois commits de livraison : spécifications, application, publication Pages.
+11. La livraison initiale est séparée en trois commits : spécifications, application, publication Pages ; les améliorations ultérieures restent isolées dans leurs propres commits.
 12. Le workflow GitHub Pages publie automatiquement `main` après validation des tests.
+13. Le joueur peut sélectionner trois appareils et constater des vitesses maximales distinctes jusqu'à 480 kt.
+14. À l'arrêt ou au roulage, le terrain ne relance pas de fondu de tuiles à chaque mise à jour de caméra.
+15. Le relief lointain reste lisible grâce à une caméra basse altitude plus large et un horizon moins brumeux.
+16. La vue poursuite utilise un modèle 3D complet ; le train compte trois roues et se rétracte en vol sur les appareils rapides.
 
 ## Hors périmètre du MVP
 
-- Cockpit 3D photoréaliste, trafic multijoueur et météo réelle.
+- Cockpit 3D détaillé, trafic multijoueur et météo réelle.
 - Modèle aérodynamique certifié, procédures IFR et avionique complète.
-- Imagerie satellite, relief mondial 3D et recherche géographique distante.
+- Recherche géographique distante et photogrammétrie urbaine.
 - Comptes utilisateurs, backend et synchronisation cloud.
 
 ## Définition de terminé

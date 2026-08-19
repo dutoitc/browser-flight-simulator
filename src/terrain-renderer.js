@@ -24,10 +24,22 @@ export function terrainCameraForAltitude(altitude, preview = false) {
 
   return {
     // Le changement est volontairement marqué sous 2 500 ft : le sol doit se rapprocher visiblement.
-    zoom: clamp(16.55 - Math.log2(1 + safeAltitude / 330), 11.05, 16.55),
+    zoom: clamp(16.1 - Math.log2(1 + safeAltitude / 300), 11.05, 16.1),
     // Une caméra plus rasante près du sol renforce l'approche sans déformer le relief.
     pitch: 79 - heightRatio * 13,
   };
+}
+
+export function shouldUpdateTerrainCamera(previous, next) {
+  if (!previous) return true;
+  return (
+    Math.abs(previous.lon - next.lon) > 1e-7 ||
+    Math.abs(previous.lat - next.lat) > 1e-7 ||
+    Math.abs(previous.bearing - next.bearing) > 0.02 ||
+    Math.abs(previous.zoom - next.zoom) > 0.002 ||
+    Math.abs(previous.pitch - next.pitch) > 0.02 ||
+    Math.abs(previous.roll - next.roll) > 0.02
+  );
 }
 
 export function terrainZoomForAltitude(altitude, preview = false) {
@@ -45,6 +57,7 @@ export class TerrainRenderer {
     this.map = null;
     this.ready = false;
     this.destroyed = false;
+    this.lastCamera = null;
     this.initialize();
   }
 
@@ -67,8 +80,8 @@ export class TerrainRenderer {
         maxZoom: 17.5,
         attributionControl: false,
         antialias: true,
-        fadeDuration: 350,
-        renderWorldCopies: true,
+        fadeDuration: 0,
+        renderWorldCopies: false,
       });
 
       this.map.addControl(
@@ -129,7 +142,8 @@ export class TerrainRenderer {
             "raster-contrast": 0.1,
             "raster-brightness-min": 0.06,
             "raster-brightness-max": 0.93,
-            "raster-fade-duration": 250,
+            "raster-fade-duration": 0,
+            "raster-resampling": "linear",
           },
         },
         {
@@ -151,10 +165,10 @@ export class TerrainRenderer {
       },
       sky: {
         "sky-color": "#77b1d2",
-        "sky-horizon-blend": 0.28,
+        "sky-horizon-blend": 0.12,
         "horizon-color": "#d9e8eb",
         "fog-color": "#a9c5d2",
-        "fog-ground-blend": 0.62,
+        "fog-ground-blend": 0.18,
       },
     };
   }
@@ -190,9 +204,20 @@ export class TerrainRenderer {
       : clamp(basePitch + (this.focus.pitch || 0) * 0.12, 0, 85);
     const roll = clamp((this.focus.roll || 0) * preset.rollFactor, -13, 13);
 
+    const camera = {
+      lon: this.focus.lon,
+      lat: this.focus.lat,
+      bearing: this.focus.heading || 0,
+      zoom,
+      pitch,
+      roll,
+    };
+    if (!shouldUpdateTerrainCamera(this.lastCamera, camera)) return;
+    this.lastCamera = camera;
+
     this.map.jumpTo({
       center: [this.focus.lon, this.focus.lat],
-      bearing: this.focus.heading || 0,
+      bearing: camera.bearing,
       zoom,
       pitch,
       roll,

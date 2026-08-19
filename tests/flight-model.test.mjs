@@ -1,9 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { AIRCRAFTS, getAircraft } from "../src/aircrafts.js";
 import { FlightModel, shortestAngle } from "../src/flight-model.js";
 import {
   TERRAIN_EXAGGERATION,
+  shouldUpdateTerrainCamera,
   terrainCameraForAltitude,
   terrainZoomForAltitude,
 } from "../src/terrain-renderer.js";
@@ -20,6 +22,20 @@ test("un vol en l'air démarre avec des paramètres cohérents", () => {
   assert.equal(state.speed, 105);
   assert.equal(state.lat, 25.2);
   assert.equal(state.lon, 55.27);
+});
+
+test("les trois appareils proposent des performances nettement distinctes", () => {
+  assert.equal(AIRCRAFTS.length, 3);
+  assert.ok(getAircraft("vt-12").maxSpeed > getAircraft("al-182").maxSpeed);
+  assert.ok(getAircraft("sj-42").maxSpeed > getAircraft("vt-12").maxSpeed);
+  assert.equal(getAircraft("inconnu").id, "al-182");
+});
+
+test("le jet léger permet un vol bien plus rapide que le monomoteur", () => {
+  const state = new FlightModel({ startMode: "airborne", aircraftId: "sj-42" }).snapshot();
+  assert.equal(state.aircraftId, "sj-42");
+  assert.ok(state.speed > getAircraft("al-182").maxSpeed);
+  assert.ok(state.speed <= getAircraft("sj-42").maxSpeed);
 });
 
 test("la puissance accélère l'appareil au sol", () => {
@@ -93,4 +109,12 @@ test("la caméra 3D élargit le champ de vision avec l'altitude", () => {
 
 test("le relief reste naturel et ne dépasse pas une exagération de 1,2", () => {
   assert.equal(TERRAIN_EXAGGERATION, 1.2);
+});
+
+test("la caméra de terrain ignore les micro-variations qui faisaient scintiller le sol", () => {
+  const camera = { lon: 6.6323, lat: 46.5197, bearing: 20, zoom: 15, pitch: 74, roll: 0 };
+  assert.equal(shouldUpdateTerrainCamera(null, camera), true);
+  assert.equal(shouldUpdateTerrainCamera(camera, { ...camera }), false);
+  assert.equal(shouldUpdateTerrainCamera(camera, { ...camera, lon: camera.lon + 1e-8 }), false);
+  assert.equal(shouldUpdateTerrainCamera(camera, { ...camera, lon: camera.lon + 1e-5 }), true);
 });

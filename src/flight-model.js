@@ -1,3 +1,5 @@
+import { getAircraft } from "./aircrafts.js";
+
 const KNOT_TO_NM_PER_SECOND = 1 / 3600;
 const DEG_TO_RAD = Math.PI / 180;
 const NM_PER_LATITUDE_DEGREE = 60;
@@ -25,6 +27,8 @@ const DEFAULT_INPUT = Object.freeze({
 
 export class FlightModel {
   constructor(options = {}) {
+    this.aircraft = getAircraft(options.aircraftId);
+    this.performance = this.aircraft.performance;
     const startMode = options.startMode ?? "airborne";
     const isAirborne = startMode === "airborne";
     const fuel = clamp(Number(options.fuel ?? 72), 0, 100);
@@ -33,8 +37,9 @@ export class FlightModel {
       lat: Number(options.lat ?? 46.5197),
       lon: Number(options.lon ?? 6.6323),
       heading: ((Number(options.heading ?? 0) % 360) + 360) % 360,
+      aircraftId: this.aircraft.id,
       altitude: isAirborne ? Number(options.altitude ?? 2200) : 0,
-      speed: isAirborne ? Number(options.speed ?? 105) : 0,
+      speed: isAirborne ? Number(options.speed ?? this.performance.initialSpeed) : 0,
       verticalSpeed: 0,
       pitch: isAirborne ? 1.5 : 0,
       roll: 0,
@@ -55,7 +60,7 @@ export class FlightModel {
       enabled: false,
       altitude: this.state.altitude,
       heading: this.state.heading,
-      speed: Math.max(this.state.speed, 100),
+      speed: Math.max(this.state.speed, this.performance.autopilotMinSpeed),
     };
     this._eventRevision = 0;
   }
@@ -65,7 +70,11 @@ export class FlightModel {
     if (next && !this.autopilot.enabled) {
       this.autopilot.altitude = Math.max(500, this.state.altitude);
       this.autopilot.heading = this.state.heading;
-      this.autopilot.speed = clamp(this.state.speed, 80, 125);
+      this.autopilot.speed = clamp(
+        this.state.speed,
+        this.performance.autopilotMinSpeed,
+        this.performance.autopilotMaxSpeed,
+      );
       this._setEvent("autopilot-on");
     } else if (!next && this.autopilot.enabled) {
       this._setEvent("autopilot-off");
@@ -75,9 +84,15 @@ export class FlightModel {
   }
 
   setAutopilotTarget({ altitude, heading, speed } = {}) {
-    if (Number.isFinite(altitude)) this.autopilot.altitude = clamp(altitude, 500, 14000);
+    if (Number.isFinite(altitude)) this.autopilot.altitude = clamp(altitude, 500, this.aircraft.ceiling);
     if (Number.isFinite(heading)) this.autopilot.heading = ((heading % 360) + 360) % 360;
-    if (Number.isFinite(speed)) this.autopilot.speed = clamp(speed, 75, 130);
+    if (Number.isFinite(speed)) {
+      this.autopilot.speed = clamp(
+        speed,
+        this.performance.autopilotMinSpeed,
+        this.performance.autopilotMaxSpeed,
+      );
+    }
   }
 
   step(deltaSeconds, controls = DEFAULT_INPUT) {
@@ -113,32 +128,47 @@ export class FlightModel {
     this.state.pitch = approach(this.state.pitch, targetPitch, 28, dt);
     this.state.throttle = clamp(this.state.throttle + throttleInput * 0.32 * dt, 0, 1);
 
-    const groundTargetSpeed = this.state.throttle * 88;
-    const airTargetSpeed = 42 + this.state.throttle * 123 - Math.abs(this.state.pitch) * 0.7;
+    const groundTargetSpeed = this.state.throttle * this.performance.groundSpeed;
+    const airTargetSpeed =
+      this.performance.baseAirSpeed +
+      this.state.throttle * this.performance.throttleAirSpeed -
+      Math.abs(this.state.pitch) * this.performance.pitchDrag;
     const targetSpeed = this.state.airborne ? airTargetSpeed : groundTargetSpeed;
-    const acceleration = this.state.airborne ? 0.31 : 0.48;
+    const acceleration = this.state.airborne ? this.performance.acceleration : 0.48;
     this.state.speed += (targetSpeed - this.state.speed) * acceleration * dt;
-    this.state.speed = clamp(this.state.speed, 0, 165);
+    this.state.speed = clamp(this.state.speed, 0, this.aircraft.maxSpeed);
 
     if (!this.state.airborne && this.startMode === "parking" && this.state.throttle < 0.12) {
       this.state.speed = Math.max(0, this.state.speed - 7 * dt);
     }
 
-    if (!this.state.airborne && this.state.speed > 52 && this.state.pitch > 3.2) {
+    if (
+      !this.state.airborne &&
+      this.state.speed > this.performance.takeoffSpeed &&
+      this.state.pitch > 3.2
+    ) {
       this.state.airborne = true;
       this.state.altitude = 1;
       this._setEvent("takeoff");
     }
 
     if (this.state.airborne) {
-      const lowSpeedPenalty = Math.max(0, 55 - this.state.speed) * 24;
-      const targetVerticalSpeed = this.state.pitch * 112 + (this.state.speed - 82) * 2.1 - lowSpeedPenalty;
+      const lowSpeedPenalty = Math.max(0, this.performance.stallSpeed - this.state.speed) * 24;
+      const targetVerticalSpeed =
+        this.state.pitch * this.performance.climbPitchFactor +
+        (this.state.speed - this.performance.climbSpeedReference) *
+          this.performance.climbSpeedFactor -
+        lowSpeedPenalty;
       this.state.verticalSpeed += (targetVerticalSpeed - this.state.verticalSpeed) * 0.72 * dt;
-      this.state.verticalSpeed = clamp(this.state.verticalSpeed, -2600, 2200);
+      this.state.verticalSpeed = clamp(
+        this.state.verticalSpeed,
+        -this.performance.maxDescent,
+        this.performance.maxClimb,
+      );
       this.state.altitude += (this.state.verticalSpeed / 60) * dt;
 
       const airspeedFactor = clamp(this.state.speed / 100, 0.35, 1.35);
-      const turnRate = this.state.roll * 0.115 * airspeedFactor;
+      const turnRate = this.state.roll * this.performance.turnFactor * airspeedFactor;
       const windGust = this.windStrength * Math.sin(this.state.elapsedSeconds * 1.7) * 0.18;
       this.state.heading = (this.state.heading + (turnRate + windGust) * dt + 360) % 360;
 
@@ -152,7 +182,11 @@ export class FlightModel {
 
     this._move(dt);
     this.state.fuel = clamp(
-      this.state.fuel - (0.55 + this.state.throttle * 1.8) * (dt / 3600) * 20,
+      this.state.fuel -
+        (0.55 + this.state.throttle * 1.8) *
+          this.performance.fuelBurn *
+          (dt / 3600) *
+          20,
       0,
       100,
     );
@@ -189,7 +223,11 @@ export class FlightModel {
 
   _touchGround() {
     const impact = this.state.verticalSpeed;
-    const safe = impact > -480 && Math.abs(this.state.roll) < 14 && this.state.pitch > -8 && this.state.speed < 96;
+    const safe =
+      impact > -480 &&
+      Math.abs(this.state.roll) < 14 &&
+      this.state.pitch > -8 &&
+      this.state.speed < this.performance.safeLandingSpeed;
     this.state.altitude = 0;
     this.state.impactRate = impact;
     this.state.airborne = false;

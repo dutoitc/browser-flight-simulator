@@ -1,3 +1,5 @@
+import { AircraftRenderer } from "./aircraft-renderer.js";
+import { AIRCRAFTS, getAircraft } from "./aircrafts.js";
 import { DESTINATIONS, formatCoordinates, parseCoordinates, searchDestinations } from "./destinations.js";
 import { clamp, FlightModel } from "./flight-model.js";
 import { TerrainRenderer } from "./terrain-renderer.js";
@@ -17,6 +19,7 @@ const defaultStats = {
 };
 
 const settings = {
+  aircraftId: getAircraft(new URLSearchParams(window.location.search).get("aircraft")).id,
   startMode: "airborne",
   weather: "scattered",
   time: 12,
@@ -50,15 +53,18 @@ let messageTimer = 0;
 
 const previewRenderer = new TerrainRenderer($("#preview-map-webgl"), $("#preview-map-fallback"), { preview: true });
 const flightRenderer = new TerrainRenderer($("#flight-map-webgl"), $("#flight-map-fallback"));
+const aircraftRenderer = new AircraftRenderer($("#aircraft-3d"), $("#flight-stage"));
 
 init();
 
 function init() {
   bindNavigation();
   bindExplore();
+  bindAircraftSelection();
   bindFlightControls();
   renderDestinationList();
   selectDestination(selectedDestination);
+  selectAircraft(settings.aircraftId);
   updateFuelLabel();
   updateSetupSummary();
   updateStatsUi();
@@ -78,6 +84,42 @@ function init() {
     previewRenderer.render();
     if (model) flightRenderer.render(model.snapshot());
   });
+}
+
+function bindAircraftSelection() {
+  $("#aircraft-select").addEventListener("change", (event) => selectAircraft(event.target.value));
+  $$('[data-aircraft-step]').forEach((button) => {
+    button.addEventListener("click", () => {
+      const currentIndex = AIRCRAFTS.findIndex((aircraft) => aircraft.id === settings.aircraftId);
+      const step = Number(button.dataset.aircraftStep);
+      const nextIndex = (currentIndex + step + AIRCRAFTS.length) % AIRCRAFTS.length;
+      selectAircraft(AIRCRAFTS[nextIndex].id);
+    });
+  });
+  $$('[data-aircraft-id]').forEach((button) => {
+    button.addEventListener("click", () => selectAircraft(button.dataset.aircraftId));
+  });
+}
+
+function selectAircraft(id) {
+  const aircraft = getAircraft(id);
+  settings.aircraftId = aircraft.id;
+  $("#aircraft-select").value = aircraft.id;
+  $("#aircraft-card").dataset.aircraft = aircraft.id;
+  $("#aircraft-name").textContent = aircraft.name;
+  $("#aircraft-description").textContent = aircraft.description;
+  $("#aircraft-cruise").textContent = `${aircraft.cruiseSpeed} kt`;
+  $("#aircraft-power").textContent = aircraft.power;
+  $("#aircraft-endurance").textContent = aircraft.endurance;
+  $("#aircraft-ceiling").textContent = `${numberFormat.format(aircraft.ceiling)} ft`;
+  $$('[data-aircraft-id]').forEach((button) => {
+    const selected = button.dataset.aircraftId === aircraft.id;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  aircraftRenderer.setAircraft(aircraft.id);
+  updateFuelLabel();
+  updateSetupSummary();
 }
 
 function bindNavigation() {
@@ -212,13 +254,14 @@ function selectDestination(destination) {
 
 function updateFuelLabel() {
   $("#fuel-label").textContent = `${settings.fuel} % de carburant`;
-  const hours = (settings.fuel / 19.2).toFixed(1).replace(".", " h ");
+  const fullEndurance = Number.parseFloat(getAircraft(settings.aircraftId).endurance);
+  const hours = ((settings.fuel / 100) * fullEndurance).toFixed(1).replace(".", " h ");
   $("#fuel-range-label").textContent = `≈ ${hours} d'autonomie`;
 }
 
 function updateSetupSummary() {
   const weatherNames = { clear: "Clair", scattered: "Épars", windy: "Vent" };
-  $("#setup-summary").textContent = `${String(settings.time).padStart(2, "0")}:00 · ${weatherNames[settings.weather]}`;
+  $("#setup-summary").textContent = `${getAircraft(settings.aircraftId).shortName} · ${String(settings.time).padStart(2, "0")}:00 · ${weatherNames[settings.weather]}`;
 }
 
 async function shareFlight() {
@@ -228,6 +271,7 @@ async function shareFlight() {
   url.searchParams.set("lon", selectedDestination.lon.toFixed(5));
   url.searchParams.set("city", selectedDestination.city);
   url.searchParams.set("heading", selectedDestination.heading ?? 0);
+  url.searchParams.set("aircraft", settings.aircraftId);
 
   const button = $("#share-button");
   try {
@@ -247,6 +291,7 @@ function startFlight() {
     lat: selectedDestination.lat,
     lon: selectedDestination.lon,
     heading: selectedDestination.heading ?? 0,
+    aircraftId: settings.aircraftId,
     startMode: settings.startMode,
     fuel: settings.fuel,
     windStrength: settings.weather === "windy" ? 0.9 : settings.weather === "scattered" ? 0.2 : 0,
@@ -266,7 +311,10 @@ function startFlight() {
   stage.dataset.time = String(settings.time);
   stage.dataset.weather = settings.weather;
   stage.dataset.camera = "chase";
+  stage.dataset.aircraft = settings.aircraftId;
   flightRenderer.setCameraMode("chase");
+  aircraftRenderer.setAircraft(settings.aircraftId);
+  aircraftRenderer.setCameraMode("chase");
   stage.classList.remove("is-paused", "is-hud-hidden");
   $("#pause-button").textContent = "Ⅱ";
   $("#autopilot-button").setAttribute("aria-pressed", "false");
@@ -284,6 +332,7 @@ function prepareBriefing() {
   $("#briefing-overlay").classList.remove("is-hidden");
   $("#briefing-city").textContent = selectedDestination.city;
   $("#briefing-copy").textContent = `Vol libre au-dessus de ${selectedDestination.city}. Prends une ligne, stabilise l'appareil et explore la région.`;
+  $("#briefing-aircraft").textContent = getAircraft(settings.aircraftId).shortName;
   $("#briefing-start").textContent = startNames[settings.startMode];
   $("#briefing-time").textContent = `${String(settings.time).padStart(2, "0")}:00`;
   $("#briefing-weather").textContent = weatherNames[settings.weather];
@@ -407,6 +456,7 @@ function renderFlight(state, renderMap = false) {
   plane.style.setProperty("--shadow-opacity", (groundProximity * 0.2).toFixed(3));
   plane.style.setProperty("--shadow-scale", (0.58 + groundProximity * 0.38).toFixed(3));
   $("#attitude-ball").style.transform = `rotate(${-state.roll}deg) translateY(${state.pitch * 1.5}px)`;
+  aircraftRenderer.render(state);
 
   if (renderMap) flightRenderer.render(state);
 }
@@ -448,6 +498,7 @@ function changeCamera() {
   cameraMode = (cameraMode + 1) % cameras.length;
   $("#flight-stage").dataset.camera = cameras[cameraMode];
   flightRenderer.setCameraMode(cameras[cameraMode]);
+  aircraftRenderer.setCameraMode(cameras[cameraMode]);
   showMessage({ chase: "Caméra poursuite", cockpit: "Vue cockpit", top: "Vue tactique" }[cameras[cameraMode]]);
 }
 

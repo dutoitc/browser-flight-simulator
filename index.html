@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
     <link rel="preconnect" href="https://tiles.maps.eox.at" />
     <link rel="preconnect" href="https://tiles.mapterhorn.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.4.1/dist/maplibre-gl.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -113,21 +114,28 @@
         </div>
 
         <div class="explore-layout">
-          <aside class="aircraft-card glass-panel">
-            <div class="aircraft-orbit" aria-hidden="true">
+          <aside class="aircraft-card glass-panel" id="aircraft-card" data-aircraft="al-182">
+            <div class="aircraft-orbit">
+              <button type="button" class="aircraft-step aircraft-step-prev" data-aircraft-step="-1" aria-label="Appareil précédent">‹</button>
               <svg viewBox="0 0 220 120">
                 <ellipse cx="110" cy="72" rx="82" ry="28" />
                 <path d="M32 63 101 53l36-37 13 3-13 35 48 8 8 10-56 2-17 29-13-1 9-29-61 2z" />
               </svg>
+              <button type="button" class="aircraft-step aircraft-step-next" data-aircraft-step="1" aria-label="Appareil suivant">›</button>
             </div>
             <p class="eyebrow">APPAREIL</p>
-            <h2>AL-182 Skylane</h2>
-            <p class="muted">Monomoteur · pilotage accessible</p>
+            <h2 id="aircraft-name">AL-182 Skylane</h2>
+            <p class="muted" id="aircraft-description">École et tourisme · pilotage accessible</p>
+            <div class="aircraft-dots" aria-label="Choisir un appareil">
+              <button type="button" class="is-selected" data-aircraft-id="al-182" aria-label="AL-182 Skylane" aria-pressed="true"></button>
+              <button type="button" data-aircraft-id="vt-12" aria-label="VT-12 Velocity" aria-pressed="false"></button>
+              <button type="button" data-aircraft-id="sj-42" aria-label="SJ-42 Stratus" aria-pressed="false"></button>
+            </div>
             <div class="aircraft-stats">
-              <div><span>Vitesse croisière</span><b>124 kt</b></div>
-              <div><span>Puissance</span><b>180 hp</b></div>
-              <div><span>Autonomie</span><b>5.2 h</b></div>
-              <div><span>Plafond</span><b>14 000 ft</b></div>
+              <div><span>Vitesse croisière</span><b id="aircraft-cruise">124 kt</b></div>
+              <div><span>Puissance</span><b id="aircraft-power">180 hp</b></div>
+              <div><span>Autonomie</span><b id="aircraft-endurance">5.2 h</b></div>
+              <div><span>Plafond</span><b id="aircraft-ceiling">14 000 ft</b></div>
             </div>
           </aside>
 
@@ -162,6 +170,14 @@
                 <span id="setup-summary">12:00 · Épars</span>
               </div>
               <div class="setup-grid">
+                <fieldset>
+                  <legend>Appareil</legend>
+                  <select id="aircraft-select">
+                    <option value="al-182">AL-182 · 165 kt</option>
+                    <option value="vt-12">VT-12 · 290 kt</option>
+                    <option value="sj-42">SJ-42 · 480 kt</option>
+                  </select>
+                </fieldset>
                 <fieldset>
                   <legend>Départ</legend>
                   <div class="segmented" data-setting="startMode">
@@ -244,6 +260,8 @@
             <div class="instrument-mini"><span>CARBURANT</span><b id="flight-fuel-value">72 %</b></div>
             <div class="instrument-mini"><span>STATUT</span><b id="flight-status">EN VOL</b></div>
           </aside>
+
+          <div class="aircraft-3d" id="aircraft-3d" aria-hidden="true"></div>
 
           <div class="aircraft-view" id="aircraft-view" aria-hidden="true">
             <svg class="aircraft-model aircraft-chase" viewBox="0 0 420 245">
@@ -391,6 +409,7 @@
               <div class="briefing-plane" aria-hidden="true">✈</div>
               <p id="briefing-copy">Vol libre au-dessus de Lausanne. Prends de l'altitude et explore la région.</p>
               <dl>
+                <div><dt>Appareil</dt><dd id="briefing-aircraft">AL-182</dd></div>
                 <div><dt>Départ</dt><dd id="briefing-start">En vol</dd></div>
                 <div><dt>Heure</dt><dd id="briefing-time">12:00</dd></div>
                 <div><dt>Météo</dt><dd id="briefing-weather">Épars</dd></div>
