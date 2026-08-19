@@ -117,9 +117,38 @@
           <aside class="aircraft-card glass-panel" id="aircraft-card" data-aircraft="al-182">
             <div class="aircraft-orbit">
               <button type="button" class="aircraft-step aircraft-step-prev" data-aircraft-step="-1" aria-label="Appareil précédent">‹</button>
-              <svg viewBox="0 0 220 120">
-                <ellipse cx="110" cy="72" rx="82" ry="28" />
-                <path d="M32 63 101 53l36-37 13 3-13 35 48 8 8 10-56 2-17 29-13-1 9-29-61 2z" />
+              <svg class="aircraft-preview" viewBox="0 0 220 120" aria-hidden="true">
+                <ellipse class="preview-orbit" cx="110" cy="66" rx="82" ry="31" />
+                <g class="preview-model" data-preview-aircraft="al-182">
+                  <path class="preview-body" d="M105 15q5-9 10 0l7 39 54 14-2 11-51-6-4 23 24 8-2 7-28-4-3 10-3-10-28 4-2-7 24-8-4-23-51 6-2-11 54-14z" />
+                  <path class="preview-accent" d="M39 68 92 54l2 9-55 13zm142 0-53-14-2 9 55 13z" />
+                  <path class="preview-glass" d="m102 34 5-16h6l5 16-4 13h-8z" />
+                </g>
+                <g class="preview-model" data-preview-aircraft="vt-12">
+                  <path class="preview-body" d="M106 9q4-7 8 0l8 45 63 17-4 12-58-8-4 24 28 8-2 7-32-4-3 10-3-10-32 4-2-7 28-8-4-24-58 8-4-12 63-17z" />
+                  <path class="preview-accent" d="m42 70 55-15 1 8-57 15zm137 0-55-15-1 8 57 15z" />
+                  <ellipse class="preview-prop" cx="110" cy="9" rx="26" ry="3" />
+                  <path class="preview-glass" d="m102 28 5-16h6l5 16-3 14h-10z" />
+                </g>
+                <g class="preview-model" data-preview-aircraft="sj-42">
+                  <path class="preview-body" d="M106 8q4-8 8 0l7 48 61 22-5 11-55-11-4 20 27 11-3 7-30-6-2 10-2-10-30 6-3-7 27-11-4-20-55 11-5-11 61-22z" />
+                  <path class="preview-accent" d="m50 77 49-18 1 8-48 18zm120 0-49-18-1 8 48 18z" />
+                  <path class="preview-glass" d="m102 29 5-18h6l5 18-3 14h-10z" />
+                  <circle class="preview-engine" cx="94" cy="91" r="6" /><circle class="preview-engine" cx="126" cy="91" r="6" />
+                </g>
+                <g class="preview-model" data-preview-aircraft="fx-19">
+                  <path class="preview-fighter" d="m110 7 10 45 64 38-5 9-58-19-2 25 22 9-2 5-29-5-29 5-2-5 22-9-2-25-58 19-5-9 64-38z" />
+                  <path class="preview-accent" d="m44 89 58-34 2 12-56 28zm132 0-58-34-2 12 56 28z" />
+                  <path class="preview-glass" d="m103 34 4-21h6l4 21-3 18h-8z" />
+                  <path class="preview-detail" d="m88 100 10-27m34 27-10-27" />
+                </g>
+                <g class="preview-model" data-preview-aircraft="ufo-x1">
+                  <ellipse class="preview-ufo-glow" cx="110" cy="75" rx="69" ry="17" />
+                  <path class="preview-ufo-body" d="M28 66q22-22 62-27 5-20 20-20t20 20q40 5 62 27-9 27-82 27T28 66z" />
+                  <ellipse class="preview-ufo-ring" cx="110" cy="67" rx="78" ry="20" />
+                  <path class="preview-ufo-glass" d="M88 40q5-23 22-23t22 23q-22 13-44 0z" />
+                  <circle class="preview-ufo-light" cx="69" cy="79" r="4" /><circle class="preview-ufo-light" cx="110" cy="85" r="4" /><circle class="preview-ufo-light" cx="151" cy="79" r="4" />
+                </g>
               </svg>
               <button type="button" class="aircraft-step aircraft-step-next" data-aircraft-step="1" aria-label="Appareil suivant">›</button>
             </div>
@@ -130,6 +159,8 @@
               <button type="button" class="is-selected" data-aircraft-id="al-182" aria-label="AL-182 Skylane" aria-pressed="true"></button>
               <button type="button" data-aircraft-id="vt-12" aria-label="VT-12 Velocity" aria-pressed="false"></button>
               <button type="button" data-aircraft-id="sj-42" aria-label="SJ-42 Stratus" aria-pressed="false"></button>
+              <button type="button" data-aircraft-id="fx-19" aria-label="FX-19 Vortex" aria-pressed="false"></button>
+              <button type="button" data-aircraft-id="ufo-x1" aria-label="UFO-X1 Aether" aria-pressed="false"></button>
             </div>
             <div class="aircraft-stats">
               <div><span>Vitesse croisière</span><b id="aircraft-cruise">124 kt</b></div>
@@ -176,6 +207,8 @@
                     <option value="al-182">AL-182 · 165 kt</option>
                     <option value="vt-12">VT-12 · 290 kt</option>
                     <option value="sj-42">SJ-42 · 480 kt</option>
+                    <option value="fx-19">FX-19 · 1 450 kt</option>
+                    <option value="ufo-x1">UFO-X1 · 4 200 kt</option>
                   </select>
                 </fieldset>
                 <fieldset>

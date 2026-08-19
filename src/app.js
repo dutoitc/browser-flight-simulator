@@ -253,8 +253,14 @@ function selectDestination(destination) {
 }
 
 function updateFuelLabel() {
+  const selectedAircraft = getAircraft(settings.aircraftId);
+  if (selectedAircraft.id === "ufo-x1") {
+    $("#fuel-label").textContent = `${settings.fuel} % d'énergie`;
+    $("#fuel-range-label").textContent = "Réserve antigravité quasi illimitée";
+    return;
+  }
   $("#fuel-label").textContent = `${settings.fuel} % de carburant`;
-  const fullEndurance = Number.parseFloat(getAircraft(settings.aircraftId).endurance);
+  const fullEndurance = selectedAircraft.enduranceHours ?? Number.parseFloat(selectedAircraft.endurance);
   const hours = ((settings.fuel / 100) * fullEndurance).toFixed(1).replace(".", " h ");
   $("#fuel-range-label").textContent = `≈ ${hours} d'autonomie`;
 }
@@ -332,11 +338,14 @@ function prepareBriefing() {
   $("#briefing-overlay").classList.remove("is-hidden");
   $("#briefing-city").textContent = selectedDestination.city;
   $("#briefing-copy").textContent = `Vol libre au-dessus de ${selectedDestination.city}. Prends une ligne, stabilise l'appareil et explore la région.`;
-  $("#briefing-aircraft").textContent = getAircraft(settings.aircraftId).shortName;
+  const selectedAircraft = getAircraft(settings.aircraftId);
+  $("#briefing-aircraft").textContent = selectedAircraft.shortName;
   $("#briefing-start").textContent = startNames[settings.startMode];
   $("#briefing-time").textContent = `${String(settings.time).padStart(2, "0")}:00`;
   $("#briefing-weather").textContent = weatherNames[settings.weather];
-  $("#briefing-fuel").textContent = `${settings.fuel} %`;
+  $("#briefing-fuel").textContent = selectedAircraft.id === "ufo-x1"
+    ? `${settings.fuel} % énergie`
+    : `${settings.fuel} %`;
 }
 
 function bindFlightControls() {
@@ -449,7 +458,7 @@ function renderFlight(state, renderMap = false) {
   $("#autopilot-button").setAttribute("aria-pressed", String(state.autopilot));
 
   const plane = $("#aircraft-view");
-  plane.style.transform = `translate(-50%, -50%) translateY(${state.pitch * 0.65}px) rotate(${state.roll * 0.72}deg)`;
+  plane.style.transform = `translate(-50%, -50%) translateY(${-state.pitch * 0.65}px) rotate(${state.roll * 0.72}deg)`;
   plane.style.setProperty("--prop-speed", `${(0.055 + (1 - state.throttle) * 0.13).toFixed(3)}s`);
   plane.style.setProperty("--prop-opacity", (0.36 + state.throttle * 0.5).toFixed(3));
   const groundProximity = clamp(1 - state.altitude / 600, 0, 1);

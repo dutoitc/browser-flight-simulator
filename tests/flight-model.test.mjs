@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { AIRCRAFTS, getAircraft } from "../src/aircrafts.js";
+import { aircraftPitchRotation } from "../src/aircraft-renderer.js";
 import { FlightModel, shortestAngle } from "../src/flight-model.js";
 import {
   TERRAIN_EXAGGERATION,
@@ -24,10 +25,12 @@ test("un vol en l'air démarre avec des paramètres cohérents", () => {
   assert.equal(state.lon, 55.27);
 });
 
-test("les trois appareils proposent des performances nettement distinctes", () => {
-  assert.equal(AIRCRAFTS.length, 3);
+test("les cinq appareils proposent des performances nettement distinctes", () => {
+  assert.equal(AIRCRAFTS.length, 5);
   assert.ok(getAircraft("vt-12").maxSpeed > getAircraft("al-182").maxSpeed);
   assert.ok(getAircraft("sj-42").maxSpeed > getAircraft("vt-12").maxSpeed);
+  assert.ok(getAircraft("fx-19").maxSpeed > getAircraft("sj-42").maxSpeed);
+  assert.ok(getAircraft("ufo-x1").maxSpeed > 4000);
   assert.equal(getAircraft("inconnu").id, "al-182");
 });
 
@@ -36,6 +39,20 @@ test("le jet léger permet un vol bien plus rapide que le monomoteur", () => {
   assert.equal(state.aircraftId, "sj-42");
   assert.ok(state.speed > getAircraft("al-182").maxSpeed);
   assert.ok(state.speed <= getAircraft("sj-42").maxSpeed);
+});
+
+test("le chasseur et la soucoupe démarrent à leur vitesse de croisière rapide", () => {
+  const fighter = new FlightModel({ startMode: "airborne", aircraftId: "fx-19" }).snapshot();
+  const ufo = new FlightModel({ startMode: "airborne", aircraftId: "ufo-x1" }).snapshot();
+  assert.ok(fighter.speed >= 600);
+  assert.ok(ufo.speed >= 1500);
+  assert.ok(ufo.speed > fighter.speed);
+});
+
+test("le tangage 3D suit le sens réel de montée et de descente", () => {
+  assert.ok(aircraftPitchRotation(8) > 0, "une montée doit lever le nez");
+  assert.ok(aircraftPitchRotation(-8) < 0, "une descente doit baisser le nez");
+  assert.equal(aircraftPitchRotation(0), 0);
 });
 
 test("la puissance accélère l'appareil au sol", () => {

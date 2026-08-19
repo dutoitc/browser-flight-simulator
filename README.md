@@ -1,6 +1,6 @@
 # AEROLINE — Browser Flight Simulator
 
-Un simulateur de vol léger, sans installation, jouable sur ordinateur, tablette ou téléphone. Choisis une destination et l'un des trois appareils, puis vole au-dessus d'un terrain satellite 3D.
+Un simulateur de vol léger, sans installation, jouable sur ordinateur, tablette ou téléphone. Choisis une destination et l'un des cinq appareils, puis vole au-dessus d'un terrain satellite 3D.
 
 ## Jouer
 
@@ -34,9 +34,11 @@ Une manette standard et des commandes tactiles sont également prises en charge.
 - écran d'accueil et carnet de vol conservé dans le navigateur ;
 - douze destinations et coordonnées personnalisées ;
 - préparation de l'appareil, du départ, de l'heure, de la météo et du carburant ;
-- trois appareils aux performances distinctes : monomoteur AL-182 (165 kt), turbopropulseur VT-12 (290 kt) et jet léger SJ-42 (480 kt) ;
+- cinq appareils aux performances distinctes : monomoteur AL-182 (165 kt), turbopropulseur VT-12 (290 kt), jet léger SJ-42 (480 kt), chasseur FX-19 (1 450 kt) et soucoupe UFO-X1 (4 200 kt) ;
 - modèle de vol adapté à chaque appareil avec vitesse, altitude, cap, roulis, tangage et consommation ;
-- modèles Three.js tridimensionnels avec fuselage fuselé, ailes effilées, cockpit vitré, feux, propulsion et train tricycle ; train escamotable sur le turbopropulseur et le jet ;
+- modèles Three.js tridimensionnels avec fuselage fuselé, ailes effilées, cockpit vitré, feux et propulsion ; train tricycle cohérent, trains escamotables, postcombustion animée et anneau antigravité lumineux ;
+- silhouettes dédiées à chaque appareil dans l'écran de préparation ;
+- tangage visuel cohérent : le nez se lève en montée et s'abaisse en descente ;
 - pilote automatique, trois caméras, HUD et détection d'atterrissage ;
 - terrain WebGL réellement tridimensionnel, relief limité à ×1,2, caméra liée à l'altitude, transitions de tuiles neutralisées et horizon moins voilé ;
 - mosaïque satellite Sentinel-2 EOxCloudless et modèle d'élévation Mapterhorn, sans clé API ;

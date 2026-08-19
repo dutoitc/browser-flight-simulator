@@ -247,11 +247,31 @@ kbd { padding: .18rem .38rem; color: #abc1cf; font: 600 .65rem Inter; background
 .explore-layout { display: grid; grid-template-columns: minmax(13rem, 18rem) minmax(31rem, 1fr) minmax(13rem, 18rem); gap: 1rem; max-width: 100rem; min-height: min(46rem, calc(100vh - 13rem)); margin: 0 auto; }
 .aircraft-card, .destinations-panel { align-self: stretch; padding: 1.2rem; border-radius: .45rem; }
 .aircraft-orbit { position: relative; display: grid; place-items: center; min-height: 13rem; margin: -.4rem -.4rem 1rem; background: radial-gradient(circle, rgba(37,214,245,.11), transparent 55%); }
-.aircraft-orbit svg { width: 100%; max-width: 13rem; overflow: visible; }
-.aircraft-orbit ellipse { fill: none; stroke: rgba(37,214,245,.24); stroke-width: 1; stroke-dasharray: 5 7; }
-.aircraft-orbit path { fill: #d5e3eb; transform-origin: center; transition: transform .35s ease, fill .35s ease; filter: drop-shadow(0 12px 12px rgba(0,0,0,.55)); }
-.aircraft-card[data-aircraft="vt-12"] .aircraft-orbit path { fill: #e9dbc0; transform: scaleX(1.08); }
-.aircraft-card[data-aircraft="sj-42"] .aircraft-orbit path { fill: #c9f5ff; transform: scaleX(1.16) scaleY(.84); }
+.aircraft-card { --aircraft-accent: #d92c38; --aircraft-body: #d9e6eb; }
+.aircraft-card[data-aircraft="vt-12"] { --aircraft-accent: #f1a62b; --aircraft-body: #e9e4da; }
+.aircraft-card[data-aircraft="sj-42"] { --aircraft-accent: #25d6f5; --aircraft-body: #d9eff3; }
+.aircraft-card[data-aircraft="fx-19"] { --aircraft-accent: #ff7b3d; --aircraft-body: #8799a1; }
+.aircraft-card[data-aircraft="ufo-x1"] { --aircraft-accent: #a875ff; --aircraft-body: #aebcc4; }
+.aircraft-preview { width: 100%; max-width: 13rem; overflow: visible; }
+.preview-orbit { fill: none; stroke: color-mix(in srgb, var(--aircraft-accent) 42%, transparent); stroke-width: 1; stroke-dasharray: 5 7; }
+.preview-model { display: none; transform-origin: 110px 65px; filter: drop-shadow(0 12px 10px rgba(0,0,0,.58)); animation: aircraft-float 3.4s ease-in-out infinite; }
+.aircraft-card[data-aircraft="al-182"] [data-preview-aircraft="al-182"],
+.aircraft-card[data-aircraft="vt-12"] [data-preview-aircraft="vt-12"],
+.aircraft-card[data-aircraft="sj-42"] [data-preview-aircraft="sj-42"],
+.aircraft-card[data-aircraft="fx-19"] [data-preview-aircraft="fx-19"],
+.aircraft-card[data-aircraft="ufo-x1"] [data-preview-aircraft="ufo-x1"] { display: block; }
+.preview-body, .preview-fighter { fill: var(--aircraft-body); stroke: rgba(225,247,250,.58); stroke-width: .8; }
+.preview-accent { fill: var(--aircraft-accent); }
+.preview-glass { fill: #163d50; stroke: #9edcef; stroke-width: .8; }
+.preview-prop { fill: rgba(220,241,247,.25); stroke: #d5f4fb; stroke-width: .7; }
+.preview-engine { fill: #0a151c; stroke: #7b929d; stroke-width: 1.4; }
+.preview-detail { fill: none; stroke: rgba(230,246,249,.55); stroke-width: 1; }
+.preview-ufo-glow { fill: color-mix(in srgb, var(--aircraft-accent) 24%, transparent); filter: blur(5px); }
+.preview-ufo-body { fill: var(--aircraft-body); stroke: #effcff; stroke-width: 1; }
+.preview-ufo-ring { fill: none; stroke: var(--aircraft-accent); stroke-width: 3; }
+.preview-ufo-glass { fill: #24445c; stroke: #b6efff; stroke-width: 1; }
+.preview-ufo-light { fill: #dffcff; filter: drop-shadow(0 0 4px var(--aircraft-accent)); }
+@keyframes aircraft-float { 50% { transform: translateY(-3px) rotate(-1deg); } }
 .aircraft-step { position: absolute; z-index: 2; top: 50%; display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: #cce9f2; font-size: 1.35rem; background: rgba(4,15,24,.76); border: 1px solid var(--line); border-radius: 50%; transform: translateY(-50%); cursor: pointer; }
 .aircraft-step:hover, .aircraft-step:focus-visible { color: #00131b; background: var(--cyan); }
 .aircraft-step-prev { left: 0; }

@@ -4,6 +4,10 @@ const THREE_MODULE = "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.mod
 
 const degToRad = (degrees) => (degrees * Math.PI) / 180;
 
+export function aircraftPitchRotation(pitch) {
+  return degToRad((Number(pitch) || 0) * 0.72);
+}
+
 function wingGeometry(THREE, side, span, rootChord, tipChord, sweep, thickness = 0.1) {
   const direction = side === "left" ? -1 : 1;
   const rootX = direction * 0.18;
@@ -264,6 +268,181 @@ function buildJet(THREE, aircraft) {
   return group;
 }
 
+function buildFighter(THREE, aircraft) {
+  const group = new THREE.Group();
+  const materials = buildMaterials(THREE, aircraft);
+  materials.body.color.set(0x7d8e96);
+  materials.body.metalness = 0.62;
+  materials.body.roughness = 0.3;
+  materials.accent.emissive = new THREE.Color(0x5b1807);
+  materials.accent.emissiveIntensity = 0.35;
+
+  const fuselage = new THREE.Mesh(fuselageGeometry(THREE, 10.2, 1.05, 40), materials.body);
+  group.add(fuselage);
+  addWingPair(THREE, group, materials.body, {
+    span: 4.55,
+    rootChord: 4.15,
+    tipChord: 0.34,
+    sweep: 2.68,
+    thickness: 0.14,
+    y: -0.08,
+    z: 0.25,
+  });
+  addWingPair(THREE, group, materials.accent, {
+    span: 4.48,
+    rootChord: 0.2,
+    tipChord: 0.1,
+    sweep: 4.45,
+    thickness: 0.15,
+    y: -0.06,
+    z: -1.55,
+  });
+  addWingPair(THREE, group, materials.body, {
+    span: 2.45,
+    rootChord: 1.48,
+    tipChord: 0.28,
+    sweep: 0.94,
+    thickness: 0.09,
+    y: 0.18,
+    z: 3.48,
+  });
+
+  const cockpit = new THREE.Mesh(new THREE.SphereGeometry(0.79, 30, 18), materials.glass);
+  cockpit.scale.set(0.86, 0.52, 1.55);
+  cockpit.position.set(0, 0.52, -2.45);
+  group.add(cockpit);
+  const canopyFrame = new THREE.Mesh(new THREE.TorusGeometry(0.53, 0.035, 10, 28), materials.dark);
+  canopyFrame.scale.set(1, 0.65, 1);
+  canopyFrame.position.set(0, 0.52, -2.15);
+  group.add(canopyFrame);
+
+  [-1, 1].forEach((side) => {
+    const intake = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.5, 1.55), materials.dark);
+    intake.position.set(side * 0.72, -0.17, -0.25);
+    intake.rotation.y = side * 0.08;
+    group.add(intake);
+
+    const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.47, 2.7, 30), materials.dark);
+    engine.rotation.x = Math.PI / 2;
+    engine.position.set(side * 0.55, 0.02, 3.55);
+    group.add(engine);
+    const nozzle = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.1, 10, 28), materials.metal);
+    nozzle.position.set(side * 0.55, 0.02, 4.93);
+    group.add(nozzle);
+    const afterburnerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x5fdcff,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const afterburner = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.25, 24), afterburnerMaterial);
+    afterburner.rotation.x = Math.PI / 2;
+    afterburner.position.set(side * 0.55, 0.02, 5.46);
+    afterburner.userData.isAfterburner = true;
+    group.add(afterburner);
+
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.6, 1.7), materials.body);
+    fin.rotation.x = -0.44;
+    fin.rotation.z = side * -0.12;
+    fin.position.set(side * 0.68, 0.82, 3.75);
+    group.add(fin);
+
+    const missileBody = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.7, 16), materials.body);
+    missileBody.rotation.x = Math.PI / 2;
+    missileBody.position.set(side * 2.45, -0.32, 1.35);
+    group.add(missileBody);
+    const missileNose = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.34, 16), materials.accent);
+    missileNose.rotation.x = -Math.PI / 2;
+    missileNose.position.set(side * 2.45, -0.32, 0.34);
+    group.add(missileNose);
+  });
+
+  addTricycleGear(THREE, group, materials, {
+    mainX: 1.4,
+    mainZ: 1.1,
+    noseZ: -3.4,
+    y: -1.08,
+    radius: 0.27,
+  });
+  addNavigationLights(THREE, group, 4.5, -0.04, 2.8);
+  group.userData.retractableGear = true;
+  group.userData.cameraDistance = 14.2;
+  return group;
+}
+
+function buildUfo(THREE, aircraft) {
+  const group = new THREE.Group();
+  const materials = buildMaterials(THREE, aircraft);
+  const hull = new THREE.MeshStandardMaterial({
+    color: 0x96a7b1,
+    metalness: 0.92,
+    roughness: 0.18,
+    clearcoat: 1,
+    clearcoatRoughness: 0.06,
+  });
+  const violet = new THREE.MeshStandardMaterial({
+    color: aircraft.color,
+    emissive: 0x5d27a5,
+    emissiveIntensity: 3.2,
+    metalness: 0.35,
+    roughness: 0.22,
+  });
+  const glow = new THREE.MeshBasicMaterial({
+    color: 0x9eeeff,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  const upperHull = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 28), hull);
+  upperHull.scale.set(4.2, 0.52, 4.2);
+  upperHull.position.y = 0.08;
+  group.add(upperHull);
+  const lowerHull = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 24), materials.dark);
+  lowerHull.scale.set(3.55, 0.48, 3.55);
+  lowerHull.position.y = -0.25;
+  group.add(lowerHull);
+
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), materials.glass);
+  dome.scale.set(1.85, 0.9, 1.85);
+  dome.position.y = 0.55;
+  group.add(dome);
+  const domeFrame = new THREE.Mesh(new THREE.TorusGeometry(1.82, 0.08, 12, 48), hull);
+  domeFrame.rotation.x = Math.PI / 2;
+  domeFrame.position.y = 0.22;
+  group.add(domeFrame);
+
+  const rotor = new THREE.Group();
+  rotor.userData.isRotor = true;
+  const energyRing = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.13, 12, 64), violet);
+  energyRing.rotation.x = Math.PI / 2;
+  rotor.add(energyRing);
+  for (let index = 0; index < 12; index += 1) {
+    const angle = (index / 12) * Math.PI * 2;
+    const light = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), glow);
+    light.position.set(Math.cos(angle) * 3.25, -0.4, Math.sin(angle) * 3.25);
+    rotor.add(light);
+  }
+  group.add(rotor);
+
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 2.25, 0.35, 48), violet);
+  core.position.y = -0.5;
+  core.userData.isEnergyCore = true;
+  group.add(core);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.6, 1.8, 40, 1, true), glow);
+  beam.position.y = -1.35;
+  beam.visible = false;
+  beam.userData.isEnergyCore = true;
+  group.add(beam);
+
+  group.userData.retractableGear = true;
+  group.userData.isUfo = true;
+  group.userData.cameraDistance = 12.5;
+  return group;
+}
+
 export class AircraftRenderer {
   constructor(container, stage) {
     this.container = container;
@@ -277,6 +456,9 @@ export class AircraftRenderer {
     this.cameraMode = "chase";
     this.propellers = [];
     this.gear = [];
+    this.rotors = [];
+    this.afterburners = [];
+    this.energyCores = [];
     this.targetPitch = 0;
     this.targetRoll = 0;
     this.initialize();
@@ -319,20 +501,29 @@ export class AircraftRenderer {
     if (!this.THREE || !this.scene) return;
     if (this.model) this.scene.remove(this.model);
     const aircraft = getAircraft(this.aircraftId);
-    this.model =
-      aircraft.id === "sj-42"
-        ? buildJet(this.THREE, aircraft)
-        : aircraft.id === "vt-12"
-          ? buildTurboprop(this.THREE, aircraft)
-          : buildTrainer(this.THREE, aircraft);
+    const builders = {
+      "al-182": buildTrainer,
+      "vt-12": buildTurboprop,
+      "sj-42": buildJet,
+      "fx-19": buildFighter,
+      "ufo-x1": buildUfo,
+    };
+    this.model = (builders[aircraft.id] ?? buildTrainer)(this.THREE, aircraft);
     this.model.rotation.y = 0;
     this.scene.add(this.model);
     this.propellers = [];
     this.gear = [];
+    this.rotors = [];
+    this.afterburners = [];
+    this.energyCores = [];
     this.model.traverse((object) => {
       if (object.userData.isPropeller) this.propellers.push(object);
       if (object.userData.isLandingGear) this.gear.push(object);
+      if (object.userData.isRotor) this.rotors.push(object);
+      if (object.userData.isAfterburner) this.afterburners.push(object);
+      if (object.userData.isEnergyCore) this.energyCores.push(object);
     });
+    this.setCameraMode(this.cameraMode);
   }
 
   setCameraMode(mode) {
@@ -342,7 +533,7 @@ export class AircraftRenderer {
       this.camera.position.set(0, 14.5, 0.01);
       this.camera.lookAt(0, 0, 0);
     } else {
-      this.camera.position.set(0, 4.15, 12.8);
+      this.camera.position.set(0, 4.15, this.model?.userData.cameraDistance ?? 12.8);
       this.camera.lookAt(0, 0.05, 0);
     }
   }
@@ -358,13 +549,23 @@ export class AircraftRenderer {
 
   render(state) {
     if (!this.renderer || !this.model || !state) return;
-    this.targetPitch += (degToRad(-state.pitch * 0.72) - this.targetPitch) * 0.14;
+    this.targetPitch += (aircraftPitchRotation(state.pitch) - this.targetPitch) * 0.14;
     this.targetRoll += (degToRad(-state.roll * 0.88) - this.targetRoll) * 0.14;
     this.model.rotation.x = this.cameraMode === "top" ? 0 : this.targetPitch;
     this.model.rotation.z = this.targetRoll;
     this.model.position.y = this.cameraMode === "top" ? 0 : -0.25 + Math.sin(state.elapsedSeconds * 1.4) * 0.015;
     const propellerSpeed = 0.18 + state.throttle * 0.75;
     this.propellers.forEach((propeller) => (propeller.rotation.z += propellerSpeed));
+    this.rotors.forEach((rotor) => (rotor.rotation.y += 0.018 + state.throttle * 0.08));
+    this.afterburners.forEach((afterburner) => {
+      afterburner.material.opacity = 0.08 + state.throttle * 0.82;
+      afterburner.scale.y = 0.45 + state.throttle * 1.15;
+    });
+    this.energyCores.forEach((core, index) => {
+      const pulse = 0.82 + Math.sin(state.elapsedSeconds * 7 + index) * 0.12;
+      core.scale.set(pulse, 1, pulse);
+      if (index > 0) core.visible = state.throttle > 0.72;
+    });
     const showGear = !this.model.userData.retractableGear || !state.airborne || state.altitude < 320;
     this.gear.forEach((gear) => (gear.visible = showGear));
     this.renderer.render(this.scene, this.camera);

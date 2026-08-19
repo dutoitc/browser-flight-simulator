@@ -20,7 +20,7 @@ Le projet doit rester simple à héberger sur GitHub Pages : HTML, CSS et JavaSc
 - Rechercher une destination locale par nom ou saisir directement des coordonnées `latitude, longitude`.
 - Afficher la destination sélectionnée et ses coordonnées sur une carte de préparation.
 - Choisir l'appareil, l'heure, la météo, le carburant et le mode de départ.
-- Proposer un monomoteur accessible, un turbopropulseur rapide et un jet léger, chacun avec ses performances.
+- Proposer cinq appareils : monomoteur, turbopropulseur, jet léger, chasseur supersonique et soucoupe antigravité, chacun avec ses performances.
 
 ### 3. Simulation de vol
 
@@ -30,6 +30,8 @@ Le projet doit rester simple à héberger sur GitHub Pages : HTML, CSS et JavaSc
 - Proposer pause, recentrage, changement de caméra, masquage du HUD et pilote automatique.
 - Détecter un atterrissage réussi ou un crash selon la vitesse verticale et l'inclinaison.
 - Afficher l'appareil comme un volume 3D éclairé avec fuselage, ailes, cockpit, propulsion, feux et train tricycle cohérent.
+- Représenter chaque appareil par une silhouette propre dans l'écran de préparation.
+- Faire correspondre le tangage du modèle 3D à la variation d'altitude : nez levé en montée, nez baissé en descente.
 
 ### 4. Interface
 
@@ -85,10 +87,13 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 10. Les tests unitaires du modèle de vol passent avec `node --test`.
 11. La livraison initiale est séparée en trois commits : spécifications, application, publication Pages ; les améliorations ultérieures restent isolées dans leurs propres commits.
 12. Le workflow GitHub Pages publie automatiquement `main` après validation des tests.
-13. Le joueur peut sélectionner trois appareils et constater des vitesses maximales distinctes jusqu'à 480 kt.
+13. Le joueur peut sélectionner cinq appareils et constater des vitesses maximales distinctes de 165 à 4 200 kt.
 14. À l'arrêt ou au roulage, le terrain ne relance pas de fondu de tuiles à chaque mise à jour de caméra.
 15. Le relief lointain reste lisible grâce à une caméra basse altitude plus large et un horizon moins brumeux.
 16. La vue poursuite utilise un modèle 3D complet ; le train compte trois roues et se rétracte en vol sur les appareils rapides.
+17. Le chasseur possède une géométrie delta, deux réacteurs et une postcombustion liée à la puissance.
+18. La soucoupe possède une coque, un dôme, un anneau tournant et des lumières animées.
+19. En montée, le modèle lève le nez ; en descente, il le baisse.
 
 ## Hors périmètre du MVP
 
@@ -99,4 +104,4 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 
 ## Définition de terminé
 
-Le MVP est terminé lorsque les douze critères d'acceptation sont vérifiés, que le workflow Pages est vert et que l'URL publique permet de lancer un vol sans configuration.
+Le MVP est terminé lorsque les dix-neuf critères d'acceptation sont vérifiés, que le workflow Pages est vert et que l'URL publique permet de lancer un vol sans configuration.
