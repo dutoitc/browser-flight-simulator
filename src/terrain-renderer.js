@@ -5,17 +5,33 @@ const MAPLIBRE_MODULE = "https://unpkg.com/maplibre-gl@6.4.1/dist/maplibre-gl.mj
 const TERRAIN_TILEJSON = "https://tiles.mapterhorn.com/tilejson.json";
 const SATELLITE_TILES =
   "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg";
+export const TERRAIN_EXAGGERATION = 1.2;
 
 const CAMERA_PRESETS = {
-  chase: { pitch: 74, zoomOffset: 0, rollFactor: -0.22 },
-  cockpit: { pitch: 82, zoomOffset: 0.35, rollFactor: -0.38 },
-  top: { pitch: 0, zoomOffset: 0.15, rollFactor: 0 },
+  chase: { pitchOffset: 0, zoomOffset: 0, rollFactor: -0.18 },
+  cockpit: { pitchOffset: 4, zoomOffset: 0.25, rollFactor: -0.3 },
+  top: { pitch: 0, zoomOffset: 0.3, rollFactor: 0 },
 };
 
-export function terrainZoomForAltitude(altitude, preview = false) {
-  if (preview) return 11.8;
+export function terrainCameraForAltitude(altitude, preview = false) {
+  if (preview) return { zoom: 11.8, pitch: 55 };
   const safeAltitude = Math.max(0, Number(altitude) || 0);
-  return clamp(15.4 - Math.log2(1 + safeAltitude / 650), 11.25, 15.4);
+  const heightRatio = clamp(
+    Math.log2(1 + safeAltitude / 160) / Math.log2(1 + 14000 / 160),
+    0,
+    1,
+  );
+
+  return {
+    // Le changement est volontairement marqué sous 2 500 ft : le sol doit se rapprocher visiblement.
+    zoom: clamp(16.55 - Math.log2(1 + safeAltitude / 330), 11.05, 16.55),
+    // Une caméra plus rasante près du sol renforce l'approche sans déformer le relief.
+    pitch: 79 - heightRatio * 13,
+  };
+}
+
+export function terrainZoomForAltitude(altitude, preview = false) {
+  return terrainCameraForAltitude(altitude, preview).zoom;
 }
 
 export class TerrainRenderer {
@@ -43,12 +59,12 @@ export class TerrainRenderer {
         center: [this.focus.lon, this.focus.lat],
         zoom: terrainZoomForAltitude(this.focus.altitude, this.preview),
         bearing: this.focus.heading,
-        pitch: this.preview ? 55 : CAMERA_PRESETS.chase.pitch,
+        pitch: terrainCameraForAltitude(this.focus.altitude, this.preview).pitch,
         interactive: this.preview,
         dragRotate: this.preview,
         touchPitch: this.preview,
         maxPitch: 85,
-        maxZoom: 17,
+        maxZoom: 17.5,
         attributionControl: false,
         antialias: true,
         fadeDuration: 350,
@@ -109,8 +125,8 @@ export class TerrainRenderer {
           source: "satellite",
           paint: {
             "raster-opacity": 0.98,
-            "raster-saturation": 0.12,
-            "raster-contrast": 0.16,
+            "raster-saturation": 0.06,
+            "raster-contrast": 0.1,
             "raster-brightness-min": 0.06,
             "raster-brightness-max": 0.93,
             "raster-fade-duration": 250,
@@ -121,7 +137,7 @@ export class TerrainRenderer {
           type: "hillshade",
           source: "hillshade",
           paint: {
-            "hillshade-exaggeration": 0.86,
+            "hillshade-exaggeration": 0.46,
             "hillshade-shadow-color": "#07121b",
             "hillshade-highlight-color": "#f3e2bd",
             "hillshade-accent-color": "#345065",
@@ -131,7 +147,7 @@ export class TerrainRenderer {
       ],
       terrain: {
         source: "terrain",
-        exaggeration: this.preview ? 1.8 : 2.2,
+        exaggeration: TERRAIN_EXAGGERATION,
       },
       sky: {
         "sky-color": "#77b1d2",
@@ -164,8 +180,14 @@ export class TerrainRenderer {
     const preset = this.preview
       ? { pitch: 55, zoomOffset: 0, rollFactor: 0 }
       : CAMERA_PRESETS[this.cameraMode];
-    const zoom = terrainZoomForAltitude(this.focus.altitude, this.preview) + preset.zoomOffset;
-    const pitch = this.preview ? preset.pitch : clamp(preset.pitch + (this.focus.pitch || 0) * 0.16, 0, 85);
+    const altitudeCamera = terrainCameraForAltitude(this.focus.altitude, this.preview);
+    const zoom = altitudeCamera.zoom + preset.zoomOffset;
+    const basePitch = Number.isFinite(preset.pitch)
+      ? preset.pitch
+      : altitudeCamera.pitch + preset.pitchOffset;
+    const pitch = this.preview
+      ? basePitch
+      : clamp(basePitch + (this.focus.pitch || 0) * 0.12, 0, 85);
     const roll = clamp((this.focus.roll || 0) * preset.rollFactor, -13, 13);
 
     this.map.jumpTo({

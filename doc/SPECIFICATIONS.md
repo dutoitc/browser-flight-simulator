@@ -54,7 +54,7 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 - `src/app.js` : navigation, stockage local et orchestration.
 - `src/flight-model.js` : modèle de vol déterministe et testable.
 - `src/map-renderer.js` : rendu cartographique et cache des tuiles.
-- `src/terrain-renderer.js` : terrain WebGL, relief exagéré, satellite et repli cartographique.
+- `src/terrain-renderer.js` : terrain WebGL, relief plafonné à ×1,2, caméra liée à l'altitude, satellite et repli cartographique.
 - `src/destinations.js` : catalogue local et recherche par coordonnées.
 - `tests/flight-model.test.mjs` : tests unitaires exécutables avec Node.js.
 - `.github/workflows/pages.yml` : validation et déploiement GitHub Pages.

@@ -246,92 +246,116 @@
           </aside>
 
           <div class="aircraft-view" id="aircraft-view" aria-hidden="true">
-            <svg class="aircraft-model aircraft-chase" viewBox="0 0 420 240">
+            <svg class="aircraft-model aircraft-chase" viewBox="0 0 420 245">
               <defs>
                 <linearGradient id="chaseWing" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#ffffff" />
-                  <stop offset="0.55" stop-color="#dce7ec" />
-                  <stop offset="1" stop-color="#8299a6" />
+                  <stop offset="0" stop-color="#fcfdfd" />
+                  <stop offset="0.3" stop-color="#e8eef0" />
+                  <stop offset="0.72" stop-color="#bdc9ce" />
+                  <stop offset="1" stop-color="#788b94" />
                 </linearGradient>
                 <linearGradient id="chaseBody" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stop-color="#8198a6" />
-                  <stop offset="0.28" stop-color="#e5eef2" />
-                  <stop offset="0.53" stop-color="#ffffff" />
-                  <stop offset="0.78" stop-color="#c2d0d7" />
-                  <stop offset="1" stop-color="#6d8593" />
+                  <stop offset="0" stop-color="#657984" />
+                  <stop offset="0.18" stop-color="#b8c5ca" />
+                  <stop offset="0.43" stop-color="#f8faf9" />
+                  <stop offset="0.6" stop-color="#ffffff" />
+                  <stop offset="0.82" stop-color="#aab9c0" />
+                  <stop offset="1" stop-color="#596e79" />
                 </linearGradient>
                 <linearGradient id="chaseGlass" x1="0" y1="0" x2="0" y2="1">
-                  <stop stop-color="#b9edff" />
-                  <stop offset="0.22" stop-color="#47788e" />
-                  <stop offset="1" stop-color="#071a27" />
+                  <stop stop-color="#c9f1fb" />
+                  <stop offset="0.18" stop-color="#5f93a5" />
+                  <stop offset="0.55" stop-color="#214451" />
+                  <stop offset="1" stop-color="#07151d" />
                 </linearGradient>
                 <filter id="navGlow" x="-300%" y="-300%" width="700%" height="700%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feGaussianBlur stdDeviation="1.6" result="blur" />
                   <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="propBlur" x="-30%" y="-100%" width="160%" height="300%">
+                  <feGaussianBlur stdDeviation="2.2" />
                 </filter>
               </defs>
 
-              <ellipse class="aircraft-cast-shadow" cx="213" cy="190" rx="143" ry="27" />
-              <ellipse class="propeller-disc" cx="210" cy="35" rx="37" ry="7" />
-              <g class="propeller">
-                <path d="M207 4q5-5 8 0l-2 31h-5z" />
-                <path d="M213 66q-5 5-8 0l3-31h5z" />
-                <circle cx="210" cy="35" r="5" />
+              <ellipse class="aircraft-cast-shadow" cx="210" cy="151" rx="139" ry="30" />
+
+              <g class="propeller-system">
+                <path class="propeller-blur" d="M164 26c23-8 69-8 92 0-23 8-69 8-92 0z" />
+                <path class="propeller-core" d="M174 26h72" />
               </g>
 
-              <path class="tail-fin" d="M204 207 210 119q3-13 9-6l18 91-17 9z" />
-              <path class="tail-fin-accent" d="m211 157 7-38 11 58-15 5z" />
-              <path class="tailplane underside" d="m207 181-89 20-5 12 96-10 98 10-5-12-89-20z" />
-              <path class="tailplane" d="m208 176-91 22 92-6 96 6-91-22z" />
-              <path class="tailplane-accent" d="m117 198 47-11 2 7-49 9zm188 0-47-11-2 7 49 9z" />
+              <path class="tailplane underside" d="m207 184-91 20-6 12 99-10 101 10-6-12-91-20z" />
+              <path class="tailplane" d="m208 179-92 22 93-7 95 7-92-22z" />
+              <path class="tailplane-leading" d="m117 201 91-22 96 22" />
+              <path class="tailplane-accent" d="m119 201 42-10 2 8-45 7zm182 0-42-10-2 8 45 7z" />
+              <path class="tail-fin" d="m207 211 4-79q1-12 8-2l20 76-18 12z" />
+              <path class="tail-fin-accent" d="m215 168 3-37 13 51-14 5z" />
 
-              <path class="fuselage" d="M198 36q12-13 24 0l17 59q7 31-2 65l-16 62q-11 18-22 0l-16-62q-9-34-2-65z" />
-              <path class="fuselage-highlight" d="M205 43q5-8 10 0l8 52-5 95-8 24-8-24-5-95z" />
-              <path class="cockpit-glass" d="m190 67 12-24h16l12 24 2 29-18-7h-8l-18 7z" />
-              <path class="cockpit-frame" d="M210 44v46M189 68l20 5 21-5" />
-              <path class="fuselage-stripe" d="M185 103q25 11 51 0l2 10q-27 14-55 0z" />
-              <path class="engine-cowl" d="M198 35q12-12 24 0l-3 15h-18z" />
-              <ellipse class="spinner" cx="210" cy="35" rx="7" ry="5" />
+              <path class="fuselage" d="M199 31c3-10 19-10 22 0 11 25 19 50 20 75 1 27-7 59-17 99-4 17-8 25-14 27-6-2-10-10-14-27-10-40-18-72-17-99 1-25 9-50 20-75z" />
+              <path class="fuselage-side-shade" d="M199 32c-12 32-16 56-15 83 1 34 11 67 23 110-5-7-8-16-11-29-10-38-18-66-17-90 1-25 9-50 20-74z" />
+              <path class="fuselage-highlight" d="M205 34c2-7 8-7 10 0l9 61-7 103-7 27-7-27-7-103z" />
+              <path class="cockpit-glass" d="m188 65 12-29h20l12 29-3 31-15-6h-8l-15 6z" />
+              <path class="cockpit-pane cockpit-pane-left" d="m190 66 11-26 7 3v44l-16 6z" />
+              <path class="cockpit-pane cockpit-pane-right" d="m230 66-11-26-7 3v44l16 6z" />
+              <path class="cockpit-reflection" d="m194 61 8-17 5 2-8 35z" />
+              <path class="cockpit-frame" d="M210 41v49M189 66l20 6 22-6" />
+              <path class="engine-cowl" d="M198 31c4-10 20-10 24 0l-3 17h-18z" />
+              <path class="cowl-seam" d="M200 39h20m-19 9 3 9m15-9-3 9" />
+              <ellipse class="spinner" cx="210" cy="27" rx="8" ry="5" />
 
-              <path class="gear-strut" d="m190 110-39 55m79-55 39 55" />
-              <ellipse class="wheel wheel-left" cx="147" cy="169" rx="13" ry="8" />
-              <ellipse class="wheel wheel-right" cx="273" cy="169" rx="13" ry="8" />
-              <ellipse class="wheel-hub" cx="147" cy="169" rx="5" ry="3" />
-              <ellipse class="wheel-hub" cx="273" cy="169" rx="5" ry="3" />
+              <path class="gear-strut" d="m192 111-32 45m68-45 32 45" />
+              <path class="gear-brace" d="m183 116-23 40m54-40 46 40" />
+              <ellipse class="wheel" cx="157" cy="159" rx="11" ry="7" />
+              <ellipse class="wheel" cx="263" cy="159" rx="11" ry="7" />
+              <ellipse class="wheel-hub" cx="157" cy="159" rx="4.5" ry="2.8" />
+              <ellipse class="wheel-hub" cx="263" cy="159" rx="4.5" ry="2.8" />
 
-              <path class="main-wing underside" d="M18 101 179 80q31-9 62 0l161 21-11 19-151-13h-60L29 120z" />
-              <path class="main-wing" d="M18 96 178 75q32-10 64 0l160 21-12 16-151-12h-58L30 112z" />
-              <path class="wing-accent wing-accent-left" d="m22 97 68-9 2 17-63 7z" />
-              <path class="wing-accent wing-accent-right" d="m398 97-68-9-2 17 63 7z" />
-              <path class="aileron-line" d="m37 103 132-17m214 17L251 86" />
-              <path class="wing-strut" d="m181 103-73 47m131-47 73 47" />
-              <path class="wing-strut-light" d="m182 101-74 47m130-47 74 47" />
+              <path class="main-wing underside" d="M17 97 177 76q33-10 66 0l160 21-11 22-153-14h-58L28 119z" />
+              <path class="main-wing" d="M17 91 177 69q33-11 66 0l160 22-12 20-153-13h-56L29 111z" />
+              <path class="wing-leading-edge" d="M20 92 178 71q32-10 64 0l158 21" />
+              <path class="wing-accent" d="m23 91 61-8 3 19-62 8zm374 0-61-8-3 19 62 8z" />
+              <path class="wing-specular" d="m91 82 86-11q33-10 66 0l84 11-4 4-86-9h-54l-88 9z" />
+              <path class="flap-line" d="m40 103 132-17m208 17L248 86M92 96l-2 11m238-11 2 11" />
+              <path class="rivet-line" d="m48 98 121-16m203 16L251 82" />
+              <path class="wing-strut" d="m184 105-66 42m118-42 66 42" />
+              <path class="wing-strut-light" d="m185 103-67 42m117-42 67 42" />
+              <path class="fuselage-stripe" d="M183 106c18 9 36 11 55 0l1 10c-20 11-39 11-58 0z" />
+              <path class="panel-line" d="M190 120c13 5 27 5 40 0m-36 29c11 4 21 4 32 0m-26 40c7 3 13 3 20 0" />
 
-              <circle class="nav-light nav-red" cx="21" cy="99" r="4" />
-              <circle class="nav-light nav-green" cx="399" cy="99" r="4" />
-              <text class="aircraft-registration" x="282" y="102">HB-SKY</text>
+              <circle class="landing-light" cx="99" cy="84" r="3" />
+              <circle class="landing-light" cx="321" cy="84" r="3" />
+              <circle class="nav-light nav-red" cx="19" cy="94" r="3" />
+              <circle class="nav-light nav-green" cx="401" cy="94" r="3" />
+              <text class="aircraft-registration" x="278" y="97">HB-SKY</text>
             </svg>
 
             <svg class="aircraft-model aircraft-top" viewBox="0 0 260 220">
               <defs>
                 <linearGradient id="topWing" x1="0" y1="0" x2="0" y2="1">
-                  <stop stop-color="#fff"/><stop offset="1" stop-color="#a8bbc5"/>
+                  <stop stop-color="#fff"/><stop offset=".55" stop-color="#d7e0e3"/><stop offset="1" stop-color="#8598a1"/>
                 </linearGradient>
                 <linearGradient id="topBody" x1="0" y1="0" x2="1" y2="0">
-                  <stop stop-color="#8097a4"/><stop offset=".45" stop-color="#fff"/><stop offset="1" stop-color="#718995"/>
+                  <stop stop-color="#637985"/><stop offset=".42" stop-color="#f3f6f6"/><stop offset=".58" stop-color="#fff"/><stop offset="1" stop-color="#5f7480"/>
                 </linearGradient>
+                <filter id="topNavGlow" x="-300%" y="-300%" width="700%" height="700%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
               </defs>
               <ellipse class="aircraft-cast-shadow" cx="133" cy="126" rx="104" ry="72" />
-              <g class="propeller top-propeller"><path d="M127 3h6l-1 29h-4z"/><path d="M132 57h-6l2-29h4z"/><circle cx="130" cy="29" r="5"/></g>
+              <path class="top-propeller-blur" d="M96 28c17-7 51-7 68 0-17 7-51 7-68 0z" />
               <path class="top-fuselage" d="M119 27q11-12 22 0l11 119-10 64h-24l-10-64z" />
               <path class="top-cockpit" d="m115 50 9-17h12l9 17-4 31h-22z" />
+              <path class="top-cockpit-reflection" d="m120 49 6-13 4 2-7 35z" />
               <path class="top-main-wing" d="m8 84 104-20h36l104 20-3 30-103-12h-32L11 114z" />
               <path class="top-wing-accent" d="M9 85 56 76l2 31-47 7zm242 0-47-9-2 31 47 7z" />
+              <path class="top-surface-line" d="M16 91 112 71h36l96 20M24 105l86-14m126 14-86-14" />
               <path class="top-tailplane" d="m61 174 58-18h22l58 18-3 19-55-10h-22l-55 10z" />
               <path class="top-tail-fin" d="m130 128 12 65-12 24-12-24z" />
               <path class="top-fuselage-stripe" d="m114 91 32 0 2 12-36 0z" />
-              <circle class="nav-light nav-red" cx="10" cy="98" r="4" />
-              <circle class="nav-light nav-green" cx="250" cy="98" r="4" />
+              <ellipse class="spinner" cx="130" cy="28" rx="6" ry="4" />
+              <circle class="nav-light nav-red" cx="10" cy="98" r="3" />
+              <circle class="nav-light nav-green" cx="250" cy="98" r="3" />
             </svg>
           </div>
 
@@ -343,7 +367,7 @@
           <div class="flight-footer hud-element">
             <span id="location-value">Lausanne · 46.520, 6.632</span>
             <span>← → roulis · ↑ ↓ tangage · W/S puissance · A pilote auto · P pause</span>
-            <span>© OpenStreetMap contributors</span>
+            <span>EOX · Mapterhorn · OSM (secours)</span>
           </div>
 
           <div class="touch-controls" aria-label="Commandes tactiles">

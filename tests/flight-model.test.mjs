@@ -2,7 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { FlightModel, shortestAngle } from "../src/flight-model.js";
-import { terrainZoomForAltitude } from "../src/terrain-renderer.js";
+import {
+  TERRAIN_EXAGGERATION,
+  terrainCameraForAltitude,
+  terrainZoomForAltitude,
+} from "../src/terrain-renderer.js";
 
 const advance = (model, seconds, controls = {}) => {
   for (let elapsed = 0; elapsed < seconds; elapsed += 0.1) model.step(0.1, controls);
@@ -82,5 +86,11 @@ test("la position et le carburant évoluent pendant le vol", () => {
 test("la caméra 3D élargit le champ de vision avec l'altitude", () => {
   assert.ok(terrainZoomForAltitude(100) > terrainZoomForAltitude(2500));
   assert.ok(terrainZoomForAltitude(2500) > terrainZoomForAltitude(12000));
+  assert.ok(terrainZoomForAltitude(100) - terrainZoomForAltitude(2500) > 2);
+  assert.ok(terrainCameraForAltitude(100).pitch > terrainCameraForAltitude(12000).pitch);
   assert.equal(terrainZoomForAltitude(2200, true), 11.8);
+});
+
+test("le relief reste naturel et ne dépasse pas une exagération de 1,2", () => {
+  assert.equal(TERRAIN_EXAGGERATION, 1.2);
 });

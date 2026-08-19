@@ -16,11 +16,8 @@ function latToWorldY(lat, zoom) {
 
 function zoomForAltitude(altitude, preview) {
   if (preview) return 11;
-  if (altitude < 300) return 16;
-  if (altitude < 1200) return 15;
-  if (altitude < 3200) return 14;
-  if (altitude < 7000) return 13;
-  return 12;
+  const safeAltitude = Math.max(0, Number(altitude) || 0);
+  return clamp(16.55 - Math.log2(1 + safeAltitude / 330), 11.05, 16.55);
 }
 
 export class MapRenderer {

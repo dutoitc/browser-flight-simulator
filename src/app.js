@@ -402,6 +402,10 @@ function renderFlight(state, renderMap = false) {
   const plane = $("#aircraft-view");
   plane.style.transform = `translate(-50%, -50%) translateY(${state.pitch * 0.65}px) rotate(${state.roll * 0.72}deg)`;
   plane.style.setProperty("--prop-speed", `${(0.055 + (1 - state.throttle) * 0.13).toFixed(3)}s`);
+  plane.style.setProperty("--prop-opacity", (0.36 + state.throttle * 0.5).toFixed(3));
+  const groundProximity = clamp(1 - state.altitude / 600, 0, 1);
+  plane.style.setProperty("--shadow-opacity", (groundProximity * 0.2).toFixed(3));
+  plane.style.setProperty("--shadow-scale", (0.58 + groundProximity * 0.38).toFixed(3));
   $("#attitude-ball").style.transform = `rotate(${-state.roll}deg) translateY(${state.pitch * 1.5}px)`;
 
   if (renderMap) flightRenderer.render(state);
