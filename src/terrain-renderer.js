@@ -5,7 +5,12 @@ const MAPLIBRE_MODULE = "https://unpkg.com/maplibre-gl@6.4.1/dist/maplibre-gl.mj
 const TERRAIN_TILEJSON = "https://tiles.mapterhorn.com/tilejson.json";
 const SATELLITE_TILES =
   "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg";
+const OPEN_BUILDINGS = "https://tiles.openfreemap.org/planet";
 export const TERRAIN_EXAGGERATION = 1.2;
+
+export function isNewYorkArea(lat, lon) {
+  return Number(lat) >= 40.45 && Number(lat) <= 41.02 && Number(lon) >= -74.35 && Number(lon) <= -73.55;
+}
 
 const CAMERA_PRESETS = {
   chase: { pitchOffset: 0, zoomOffset: 0, rollFactor: -0.18 },
@@ -58,6 +63,7 @@ export class TerrainRenderer {
     this.ready = false;
     this.destroyed = false;
     this.lastCamera = null;
+    this.cityBuildingsVisible = null;
     this.initialize();
   }
 
@@ -80,6 +86,7 @@ export class TerrainRenderer {
         maxZoom: 17.5,
         attributionControl: false,
         antialias: true,
+        canvasContextAttributes: { antialias: true, preserveDrawingBuffer: true },
         fadeDuration: 0,
         renderWorldCopies: false,
       });
@@ -130,6 +137,11 @@ export class TerrainRenderer {
           url: TERRAIN_TILEJSON,
           tileSize: 512,
         },
+        openmaptiles: {
+          type: "vector",
+          url: OPEN_BUILDINGS,
+          attribution: 'Bâtiments © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> · OpenFreeMap',
+        },
       },
       layers: [
         {
@@ -156,6 +168,35 @@ export class TerrainRenderer {
             "hillshade-highlight-color": "#f3e2bd",
             "hillshade-accent-color": "#345065",
             "hillshade-illumination-direction": 325,
+          },
+        },
+        {
+          id: "city-buildings-3d",
+          type: "fill-extrusion",
+          source: "openmaptiles",
+          "source-layer": "building",
+          minzoom: 12.5,
+          filter: ["!=", ["get", "hide_3d"], true],
+          layout: {
+            visibility: "none",
+            "fill-extrusion-rounded-corner-distance": 1.4,
+          },
+          paint: {
+            "fill-extrusion-color": [
+              "interpolate", ["linear"], ["coalesce", ["get", "render_height"], 8],
+              0, "#8c9ba3",
+              80, "#b5c3c9",
+              220, "#d2dde1",
+              430, "#e4f0f2",
+            ],
+            "fill-extrusion-height": [
+              "interpolate", ["linear"], ["zoom"],
+              12.5, 0,
+              14, ["coalesce", ["get", "render_height"], 8],
+            ],
+            "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+            "fill-extrusion-opacity": 0.84,
+            "fill-extrusion-vertical-gradient": true,
           },
         },
       ],
@@ -195,7 +236,18 @@ export class TerrainRenderer {
       ? { pitch: 55, zoomOffset: 0, rollFactor: 0 }
       : CAMERA_PRESETS[this.cameraMode];
     const altitudeCamera = terrainCameraForAltitude(this.focus.altitude, this.preview);
-    const zoom = altitudeCamera.zoom + preset.zoomOffset;
+    const showCityBuildings = isNewYorkArea(this.focus.lat, this.focus.lon);
+    if (showCityBuildings !== this.cityBuildingsVisible) {
+      this.cityBuildingsVisible = showCityBuildings;
+      this.map.setLayoutProperty(
+        "city-buildings-3d",
+        "visibility",
+        showCityBuildings ? "visible" : "none",
+      );
+      this.root.classList.toggle("has-city-buildings", showCityBuildings);
+    }
+    const cityZoomOffset = showCityBuildings ? (this.preview ? 1.55 : 1.05) : 0;
+    const zoom = altitudeCamera.zoom + preset.zoomOffset + cityZoomOffset;
     const basePitch = Number.isFinite(preset.pitch)
       ? preset.pitch
       : altitudeCamera.pitch + preset.pitchOffset;
@@ -229,5 +281,9 @@ export class TerrainRenderer {
     this.fallback.destroy();
     this.map?.remove();
     this.map = null;
+  }
+
+  getCanvas() {
+    return this.map?.getCanvas() ?? this.fallback.canvas ?? null;
   }
 }

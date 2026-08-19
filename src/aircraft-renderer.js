@@ -155,11 +155,42 @@ function addNavigationLights(THREE, group, span, y, z) {
   group.add(left, right);
 }
 
+function addSurfaceDetails(THREE, group, { width, length, beaconZ = 0 }) {
+  const panelMaterial = new THREE.MeshBasicMaterial({
+    color: 0x263740,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+  });
+  [-0.18, 0.12, 0.34].forEach((ratio) => {
+    const panel = new THREE.Mesh(
+      new THREE.TorusGeometry(width * 0.5, 0.012, 6, 36),
+      panelMaterial,
+    );
+    panel.position.z = length * ratio;
+    group.add(panel);
+  });
+
+  const beaconMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff304b,
+    emissive: 0xff163a,
+    emissiveIntensity: 5,
+  });
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), beaconMaterial);
+  beacon.position.set(0, width * 0.62, beaconZ);
+  beacon.userData.isBeacon = true;
+  group.add(beacon);
+
+  const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.34, 10), panelMaterial);
+  antenna.position.set(0, width * 0.68, length * 0.28);
+  group.add(antenna);
+}
+
 function buildMaterials(THREE, aircraft) {
   return {
-    body: new THREE.MeshStandardMaterial({ color: 0xf4f7f7, metalness: 0.34, roughness: 0.38 }),
-    underside: new THREE.MeshStandardMaterial({ color: 0x9cabb2, metalness: 0.42, roughness: 0.46 }),
-    accent: new THREE.MeshStandardMaterial({ color: aircraft.color, metalness: 0.25, roughness: 0.4 }),
+    body: new THREE.MeshPhysicalMaterial({ color: 0xf4f7f7, metalness: 0.38, roughness: 0.3, clearcoat: 0.78, clearcoatRoughness: 0.16 }),
+    underside: new THREE.MeshPhysicalMaterial({ color: 0x9cabb2, metalness: 0.46, roughness: 0.4, clearcoat: 0.42 }),
+    accent: new THREE.MeshPhysicalMaterial({ color: aircraft.color, metalness: 0.3, roughness: 0.32, clearcoat: 0.72, clearcoatRoughness: 0.18 }),
     dark: new THREE.MeshStandardMaterial({ color: 0x162b36, metalness: 0.5, roughness: 0.32 }),
     metal: new THREE.MeshStandardMaterial({ color: 0xb8c5ca, metalness: 0.88, roughness: 0.23 }),
     tyre: new THREE.MeshStandardMaterial({ color: 0x101418, roughness: 0.88 }),
@@ -199,9 +230,10 @@ function buildTrainer(THREE, aircraft) {
   finStripe.position.set(0, 0.91, 2.45);
   group.add(finStripe);
 
-  addPropeller(THREE, group, materials, -3.28, 1.02, 2);
+  addPropeller(THREE, group, materials, -3.28, 1.02, 3);
   addTricycleGear(THREE, group, materials, { mainX: 1.2, mainZ: 0.25, noseZ: -2.28, y: -0.83, radius: 0.25 });
   addNavigationLights(THREE, group, 4.33, 0.48, 0.02);
+  addSurfaceDetails(THREE, group, { width: 0.88, length: 6.3, beaconZ: 0.35 });
   group.userData.retractableGear = false;
   return group;
 }
@@ -228,6 +260,7 @@ function buildTurboprop(THREE, aircraft) {
   addPropeller(THREE, group, materials, -4.03, 1.25, 5);
   addTricycleGear(THREE, group, materials, { mainX: 1.45, mainZ: 0.62, noseZ: -2.72, y: -0.94, radius: 0.28 });
   addNavigationLights(THREE, group, 4.78, -0.02, 0.65);
+  addSurfaceDetails(THREE, group, { width: 0.92, length: 7.8, beaconZ: 0.7 });
   group.userData.retractableGear = true;
   return group;
 }
@@ -260,10 +293,17 @@ function buildJet(THREE, aircraft) {
     const intake = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.07, 10, 24), materials.metal);
     intake.position.set(side * 1.02, 0.18, 1.18);
     group.add(intake);
+    const nozzle = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.08, 10, 28), materials.metal);
+    nozzle.position.set(side * 1.02, 0.18, 3.28);
+    group.add(nozzle);
+    const exhaust = new THREE.Mesh(new THREE.CircleGeometry(0.39, 28), materials.dark);
+    exhaust.position.set(side * 1.02, 0.18, 3.29);
+    group.add(exhaust);
   });
 
   addTricycleGear(THREE, group, materials, { mainX: 1.35, mainZ: 0.72, noseZ: -3.12, y: -1.02, radius: 0.3 });
   addNavigationLights(THREE, group, 4.78, -0.1, 1.68);
+  addSurfaceDetails(THREE, group, { width: 1, length: 9, beaconZ: 1.35 });
   group.userData.retractableGear = true;
   return group;
 }
@@ -366,6 +406,7 @@ function buildFighter(THREE, aircraft) {
     radius: 0.27,
   });
   addNavigationLights(THREE, group, 4.5, -0.04, 2.8);
+  addSurfaceDetails(THREE, group, { width: 1.05, length: 10.2, beaconZ: 1.6 });
   group.userData.retractableGear = true;
   group.userData.cameraDistance = 14.2;
   return group;
@@ -414,6 +455,14 @@ function buildUfo(THREE, aircraft) {
   domeFrame.position.y = 0.22;
   group.add(domeFrame);
 
+  for (let index = 0; index < 16; index += 1) {
+    const angle = (index / 16) * Math.PI * 2;
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 1.25), materials.metal);
+    rib.position.set(Math.sin(angle) * 2.82, 0.16, Math.cos(angle) * 2.82);
+    rib.rotation.y = angle;
+    group.add(rib);
+  }
+
   const rotor = new THREE.Group();
   rotor.userData.isRotor = true;
   const energyRing = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.13, 12, 64), violet);
@@ -459,6 +508,8 @@ export class AircraftRenderer {
     this.rotors = [];
     this.afterburners = [];
     this.energyCores = [];
+    this.beacons = [];
+    this.shadow = null;
     this.targetPitch = 0;
     this.targetRoll = 0;
     this.initialize();
@@ -470,21 +521,35 @@ export class AircraftRenderer {
       this.THREE = THREE;
       this.scene = new THREE.Scene();
       this.camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-      this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      this.renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+      });
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       this.renderer.setClearColor(0x000000, 0);
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = 1.15;
+      this.renderer.toneMappingExposure = 1.22;
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       this.container.append(this.renderer.domElement);
 
       this.scene.add(new THREE.HemisphereLight(0xe7f7ff, 0x34454b, 2.7));
       const key = new THREE.DirectionalLight(0xffffff, 4.2);
       key.position.set(-5, 8, 6);
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 0.5, far: 30 });
+      key.shadow.camera.updateProjectionMatrix();
       this.scene.add(key);
       const rim = new THREE.DirectionalLight(0x69dff5, 2.2);
       rim.position.set(6, 2, -5);
       this.scene.add(rim);
+      const fill = new THREE.DirectionalLight(0xffd6ae, 1.15);
+      fill.position.set(0, -2, 7);
+      this.scene.add(fill);
 
       this.setAircraft(this.aircraftId);
       this.setCameraMode(this.cameraMode);
@@ -500,6 +565,7 @@ export class AircraftRenderer {
     this.aircraftId = getAircraft(id).id;
     if (!this.THREE || !this.scene) return;
     if (this.model) this.scene.remove(this.model);
+    if (this.shadow) this.scene.remove(this.shadow);
     const aircraft = getAircraft(this.aircraftId);
     const builders = {
       "al-182": buildTrainer,
@@ -511,17 +577,27 @@ export class AircraftRenderer {
     this.model = (builders[aircraft.id] ?? buildTrainer)(this.THREE, aircraft);
     this.model.rotation.y = 0;
     this.scene.add(this.model);
+    const shadowMaterial = new this.THREE.ShadowMaterial({ color: 0x000000, opacity: 0.2 });
+    this.shadow = new this.THREE.Mesh(new this.THREE.CircleGeometry(3.4, 64), shadowMaterial);
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.scale.set(1.55, 0.72, 1);
+    this.shadow.position.set(0, -1.42, 0.65);
+    this.shadow.receiveShadow = true;
+    this.scene.add(this.shadow);
     this.propellers = [];
     this.gear = [];
     this.rotors = [];
     this.afterburners = [];
     this.energyCores = [];
+    this.beacons = [];
     this.model.traverse((object) => {
+      if (object.isMesh) object.castShadow = true;
       if (object.userData.isPropeller) this.propellers.push(object);
       if (object.userData.isLandingGear) this.gear.push(object);
       if (object.userData.isRotor) this.rotors.push(object);
       if (object.userData.isAfterburner) this.afterburners.push(object);
       if (object.userData.isEnergyCore) this.energyCores.push(object);
+      if (object.userData.isBeacon) this.beacons.push(object);
     });
     this.setCameraMode(this.cameraMode);
   }
@@ -566,8 +642,22 @@ export class AircraftRenderer {
       core.scale.set(pulse, 1, pulse);
       if (index > 0) core.visible = state.throttle > 0.72;
     });
+    this.beacons.forEach((beacon, index) => {
+      beacon.visible = Math.sin(state.elapsedSeconds * 6.5 + index) > 0.72;
+    });
     const showGear = !this.model.userData.retractableGear || !state.airborne || state.altitude < 320;
     this.gear.forEach((gear) => (gear.visible = showGear));
+    if (this.shadow) {
+      const proximity = Math.max(0, Math.min(1, 1 - state.altitude / 900));
+      this.shadow.visible = this.cameraMode === "chase" && proximity > 0.01;
+      this.shadow.material.opacity = proximity * 0.24;
+      const spread = 1 + (1 - proximity) * 0.8;
+      this.shadow.scale.set(1.55 * spread, 0.72 * spread, 1);
+    }
     this.renderer.render(this.scene, this.camera);
+  }
+
+  getCanvas() {
+    return this.renderer?.domElement ?? null;
   }
 }

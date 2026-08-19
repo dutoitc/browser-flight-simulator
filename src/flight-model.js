@@ -41,7 +41,7 @@ export class FlightModel {
       altitude: isAirborne ? Number(options.altitude ?? 2200) : 0,
       speed: isAirborne ? Number(options.speed ?? this.performance.initialSpeed) : 0,
       verticalSpeed: 0,
-      pitch: isAirborne ? 1.5 : 0,
+      pitch: 0,
       roll: 0,
       throttle: isAirborne ? 0.72 : startMode === "runway" ? 0.18 : 0,
       fuel,
@@ -50,6 +50,8 @@ export class FlightModel {
       landed: false,
       distanceNm: 0,
       elapsedSeconds: 0,
+      maxAltitude: isAirborne ? Number(options.altitude ?? 2200) : 0,
+      maxSpeed: isAirborne ? Number(options.speed ?? this.performance.initialSpeed) : 0,
       event: isAirborne ? "airborne" : "ground",
       impactRate: 0,
     };
@@ -119,13 +121,13 @@ export class FlightModel {
 
     if (input.resetAttitude) {
       rollInput = clamp(-this.state.roll / 10, -1, 1);
-      pitchInput = clamp((1.5 - this.state.pitch) / 6, -1, 1);
+      pitchInput = clamp(-this.state.pitch / 6, -1, 1);
     }
 
-    const targetRoll = rollInput * 38;
-    const targetPitch = pitchInput * 14 + (this.state.airborne ? 1.2 : 0);
-    this.state.roll = approach(this.state.roll, targetRoll, 48, dt);
-    this.state.pitch = approach(this.state.pitch, targetPitch, 28, dt);
+    const targetRoll = rollInput * (this.performance.maxRoll ?? 38);
+    const targetPitch = pitchInput * (this.performance.maxPitch ?? 14);
+    this.state.roll = approach(this.state.roll, targetRoll, this.performance.rollRate ?? 48, dt);
+    this.state.pitch = approach(this.state.pitch, targetPitch, this.performance.pitchRate ?? 28, dt);
     this.state.throttle = clamp(this.state.throttle + throttleInput * 0.32 * dt, 0, 1);
 
     const groundTargetSpeed = this.state.throttle * this.performance.groundSpeed;
@@ -154,11 +156,10 @@ export class FlightModel {
 
     if (this.state.airborne) {
       const lowSpeedPenalty = Math.max(0, this.performance.stallSpeed - this.state.speed) * 24;
+      // À commandes relâchées, un tangage neutre maintient l'altitude. L'ancien
+      // bonus proportionnel à la vitesse faisait monter l'appareil sans action du pilote.
       const targetVerticalSpeed =
-        this.state.pitch * this.performance.climbPitchFactor +
-        (this.state.speed - this.performance.climbSpeedReference) *
-          this.performance.climbSpeedFactor -
-        lowSpeedPenalty;
+        this.state.pitch * this.performance.climbPitchFactor - lowSpeedPenalty;
       this.state.verticalSpeed += (targetVerticalSpeed - this.state.verticalSpeed) * 0.72 * dt;
       this.state.verticalSpeed = clamp(
         this.state.verticalSpeed,
@@ -181,6 +182,8 @@ export class FlightModel {
     }
 
     this._move(dt);
+    this.state.maxAltitude = Math.max(this.state.maxAltitude, this.state.altitude);
+    this.state.maxSpeed = Math.max(this.state.maxSpeed, this.state.speed);
     this.state.fuel = clamp(
       this.state.fuel -
         (0.55 + this.state.throttle * 1.8) *

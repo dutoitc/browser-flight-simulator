@@ -26,6 +26,8 @@ Puis ouvre <http://localhost:8080>.
 | `P` | Pause |
 | `H` | Masquer le HUD |
 | `R` | Recentrer l'assiette |
+| `M` | Activer ou couper le son |
+| `K` | Copier une capture PNG |
 
 Une manette standard et des commandes tactiles sont également prises en charge.
 
@@ -39,8 +41,14 @@ Une manette standard et des commandes tactiles sont également prises en charge.
 - modèles Three.js tridimensionnels avec fuselage fuselé, ailes effilées, cockpit vitré, feux et propulsion ; train tricycle cohérent, trains escamotables, postcombustion animée et anneau antigravité lumineux ;
 - silhouettes dédiées à chaque appareil dans l'écran de préparation ;
 - tangage visuel cohérent : le nez se lève en montée et s'abaisse en descente ;
+- stabilité assistée : commandes relâchées, l'appareil revient au vol en palier sans gain d'altitude parasite ;
+- agilité différenciée, avec des virages beaucoup plus rapides pour le chasseur et la soucoupe ;
+- ambiance audio Web Audio propre à chaque propulsion, alertes de décrochage et passage du mur du son ;
 - pilote automatique, trois caméras, HUD et détection d'atterrissage ;
 - terrain WebGL réellement tridimensionnel, relief limité à ×1,2, caméra liée à l'altitude, transitions de tuiles neutralisées et horizon moins voilé ;
+- bâtiments OpenStreetMap extrudés en 3D dans la région de New York ;
+- capture PNG du vol vers le presse-papiers, avec téléchargement de secours ;
+- historique local des douze derniers vols avec lieu, appareil, durée, distance, performances et bouton de rejeu ;
 - mosaïque satellite Sentinel-2 EOxCloudless et modèle d'élévation Mapterhorn, sans clé API ;
 - carte OpenStreetMap de secours si WebGL ou les services 3D sont indisponibles ;
 - responsive design, clavier, tactile et Gamepad API ;
@@ -56,4 +64,4 @@ Les spécifications et critères d'acceptation se trouvent dans [`doc/SPECIFICAT
 
 ## Cartographie et licence
 
-Le rendu 3D utilise MapLibre GL JS, le relief Mapterhorn et la mosaïque EOxCloudless issue de données Copernicus Sentinel 2025. La carte de secours utilise OpenStreetMap. Ces sources restent soumises à leurs licences et attributions respectives ; le code du projet est distribué sous licence MIT.
+Le rendu 3D utilise MapLibre GL JS, le relief Mapterhorn, les bâtiments OpenFreeMap/OpenStreetMap et la mosaïque EOxCloudless issue de données Copernicus Sentinel 2025. La carte de secours utilise OpenStreetMap. Ces sources restent soumises à leurs licences et attributions respectives ; le code du projet est distribué sous licence MIT.

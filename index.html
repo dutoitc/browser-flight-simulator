@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
     <link rel="preconnect" href="https://tiles.maps.eox.at" />
     <link rel="preconnect" href="https://tiles.mapterhorn.com" />
+    <link rel="preconnect" href="https://tiles.openfreemap.org" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.4.1/dist/maplibre-gl.css" />
     <link rel="stylesheet" href="./styles.css" />
@@ -101,6 +102,19 @@
           </div>
           <button class="button button-compact" data-screen-target="explore">Commencer</button>
         </section>
+
+        <section class="history-panel glass-panel" aria-labelledby="history-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">HISTORIQUE LOCAL</p>
+              <h2 id="history-title">Derniers vols</h2>
+            </div>
+            <button class="history-clear" id="history-clear" type="button">Effacer</button>
+          </div>
+          <div class="flight-history" id="flight-history">
+            <p class="history-empty">Les prochains vols apparaîtront ici avec leur lieu, appareil, durée et résultat.</p>
+          </div>
+        </section>
       </section>
 
       <section class="screen screen-explore" id="screen-explore" aria-labelledby="explore-title">
@@ -118,6 +132,18 @@
             <div class="aircraft-orbit">
               <button type="button" class="aircraft-step aircraft-step-prev" data-aircraft-step="-1" aria-label="Appareil précédent">‹</button>
               <svg class="aircraft-preview" viewBox="0 0 220 120" aria-hidden="true">
+                <defs>
+                  <linearGradient id="previewBodyPaint" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#f8fdff" />
+                    <stop offset="0.42" class="preview-body-color" />
+                    <stop offset="1" stop-color="#657985" />
+                  </linearGradient>
+                  <linearGradient id="previewGlassPaint" x1="0" y1="0" x2="0" y2="1">
+                    <stop stop-color="#bdefff" />
+                    <stop offset="0.35" stop-color="#35758d" />
+                    <stop offset="1" stop-color="#071822" />
+                  </linearGradient>
+                </defs>
                 <ellipse class="preview-orbit" cx="110" cy="66" rx="82" ry="31" />
                 <g class="preview-model" data-preview-aircraft="al-182">
                   <path class="preview-body" d="M105 15q5-9 10 0l7 39 54 14-2 11-51-6-4 23 24 8-2 7-28-4-3 10-3-10-28 4-2-7 24-8-4-23-51 6-2-11 54-14z" />
@@ -177,6 +203,7 @@
             </div>
             <div class="map-vignette" aria-hidden="true"></div>
             <p class="map-credit">Cartographie 3D · <a href="https://www.maplibre.org/" target="_blank" rel="noreferrer">MapLibre</a></p>
+            <span class="city-3d-badge" id="city-3d-badge" hidden>▥ IMMEUBLES 3D</span>
             <form class="search-box" id="destination-form" role="search">
               <label class="sr-only" for="destination-search">Destination ou coordonnées</label>
               <span aria-hidden="true">⌕</span>
@@ -276,6 +303,8 @@
             <div class="flight-actions">
               <button class="hud-button" id="autopilot-button" aria-pressed="false">AP</button>
               <button class="hud-button" id="camera-button">CAM</button>
+              <button class="hud-button" id="sound-button" aria-pressed="true" aria-label="Couper le son" title="Son (M)">SON</button>
+              <button class="hud-button" id="screenshot-button" aria-label="Copier une capture d'écran" title="Capture (K)">CAP</button>
               <button class="hud-button" id="pause-button">Ⅱ</button>
             </div>
           </div>
@@ -290,7 +319,7 @@
           <aside class="instrument-stack instrument-right hud-element" aria-label="Cap et moteur">
             <div class="instrument"><small>CAP</small><b id="heading-side-value">000</b><em>DEG</em></div>
             <div class="instrument"><small>PUISSANCE</small><b id="throttle-value">72</b><em>%</em></div>
-            <div class="instrument-mini"><span>CARBURANT</span><b id="flight-fuel-value">72 %</b></div>
+            <div class="instrument-mini"><span id="flight-fuel-caption">CARBURANT</span><b id="flight-fuel-value">72 %</b></div>
             <div class="instrument-mini"><span>STATUT</span><b id="flight-status">EN VOL</b></div>
           </aside>
 
@@ -417,7 +446,7 @@
 
           <div class="flight-footer hud-element">
             <span id="location-value">Lausanne · 46.520, 6.632</span>
-            <span>← → roulis · ↑ ↓ tangage · W/S puissance · A pilote auto · P pause</span>
+            <span>← → roulis · ↑ ↓ tangage · W/S puissance · A auto · M son · K capture</span>
             <span>EOX · Mapterhorn · OSM (secours)</span>
           </div>
 
@@ -486,6 +515,8 @@
         <div><kbd>P</kbd><span>Pause / reprendre</span></div>
         <div><kbd>H</kbd><span>Masquer le HUD</span></div>
         <div><kbd>R</kbd><span>Recentrer l'appareil</span></div>
+        <div><kbd>M</kbd><span>Activer / couper le son</span></div>
+        <div><kbd>K</kbd><span>Copier une capture PNG</span></div>
       </div>
       <p>Une manette standard est aussi reconnue : stick gauche pour piloter, gâchettes pour la puissance.</p>
     </dialog>

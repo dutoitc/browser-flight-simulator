@@ -1,6 +1,6 @@
 {
   "name": "browser-flight-simulator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "A lightweight flight simulator playable in a browser.",

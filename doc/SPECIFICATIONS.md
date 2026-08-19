@@ -94,6 +94,13 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 17. Le chasseur possède une géométrie delta, deux réacteurs et une postcombustion liée à la puissance.
 18. La soucoupe possède une coque, un dôme, un anneau tournant et des lumières animées.
 19. En montée, le modèle lève le nez ; en descente, il le baisse.
+20. Sans commande de tangage, l'appareil revient au vol en palier et ne gagne pas d'altitude spontanément.
+21. Le chasseur et la soucoupe disposent d'une autorité de roulis et d'un taux de virage nettement supérieurs au monomoteur.
+22. Chaque propulsion possède une ambiance audio synthétisée localement et désactivable.
+23. La région de New York affiche les bâtiments OpenStreetMap sous forme d'extrusions 3D au-dessus du terrain satellite.
+24. Le joueur peut copier une capture PNG du vol ou la télécharger si le presse-papiers image est indisponible.
+25. Les douze derniers vols sont conservés localement avec lieu, appareil, résultat, durée, distance, vitesse et altitude maximales.
+26. Le journal permet de recharger la destination et l'appareil d'un vol précédent.
 
 ## Hors périmètre du MVP
 
@@ -104,4 +111,4 @@ Le MVP ne vise pas une certification ni le réalisme d'un simulateur professionn
 
 ## Définition de terminé
 
-Le MVP est terminé lorsque les dix-neuf critères d'acceptation sont vérifiés, que le workflow Pages est vert et que l'URL publique permet de lancer un vol sans configuration.
+Le MVP est terminé lorsque les vingt-six critères d'acceptation sont vérifiés, que le workflow Pages est vert et que l'URL publique permet de lancer un vol sans configuration.

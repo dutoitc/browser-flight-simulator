@@ -1,13 +1,22 @@
 import { AircraftRenderer } from "./aircraft-renderer.js";
 import { AIRCRAFTS, getAircraft } from "./aircrafts.js";
 import { DESTINATIONS, formatCoordinates, parseCoordinates, searchDestinations } from "./destinations.js";
+import { FlightAudio } from "./flight-audio.js";
 import { clamp, FlightModel } from "./flight-model.js";
-import { TerrainRenderer } from "./terrain-renderer.js";
+import { isNewYorkArea, TerrainRenderer } from "./terrain-renderer.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const numberFormat = new Intl.NumberFormat("fr-CH", { maximumFractionDigits: 0 });
+const flightDateFormat = new Intl.DateTimeFormat("fr-CH", {
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 const STATS_KEY = "aeroline-pilot-stats-v1";
+const HISTORY_KEY = "aeroline-flight-history-v1";
+const MAX_HISTORY_ENTRIES = 12;
 
 const defaultStats = {
   flights: 0,
@@ -37,6 +46,7 @@ const controls = {
 };
 
 let stats = loadStats();
+let flightHistory = loadFlightHistory();
 let selectedDestination = destinationFromUrl() ?? DESTINATIONS[0];
 let currentScreen = "home";
 let model = null;
@@ -50,10 +60,14 @@ let autopilotEnabled = false;
 let flightCommitted = false;
 let lastEventRevision = 0;
 let messageTimer = 0;
+let flightStartedAt = null;
+let lastWarningSpeed = 0;
+let stallWarningActive = false;
 
 const previewRenderer = new TerrainRenderer($("#preview-map-webgl"), $("#preview-map-fallback"), { preview: true });
 const flightRenderer = new TerrainRenderer($("#flight-map-webgl"), $("#flight-map-fallback"));
 const aircraftRenderer = new AircraftRenderer($("#aircraft-3d"), $("#flight-stage"));
+const flightAudio = new FlightAudio();
 
 init();
 
@@ -78,6 +92,11 @@ function init() {
   $("#result-exit").addEventListener("click", () => {
     $("#result-dialog").close();
     exitFlight("home");
+  });
+  $("#history-clear").addEventListener("click", clearFlightHistory);
+  $("#flight-history").addEventListener("click", (event) => {
+    const replayButton = event.target.closest("[data-history-replay]");
+    if (replayButton) replayHistoryFlight(replayButton.dataset.historyReplay);
   });
 
   window.addEventListener("resize", () => {
@@ -249,6 +268,7 @@ function selectDestination(destination) {
   $("#selected-city").textContent = destination.city;
   $("#selected-coords").textContent = formatCoordinates(destination.lat, destination.lon);
   $$(".destination-item").forEach((item) => item.classList.toggle("is-selected", item.dataset.destination === destination.id));
+  $("#city-3d-badge").hidden = !isNewYorkArea(destination.lat, destination.lon);
   previewRenderer.setFocus(destination.lat, destination.lon, destination.heading ?? 0);
 }
 
@@ -300,6 +320,7 @@ function startFlight() {
     aircraftId: settings.aircraftId,
     startMode: settings.startMode,
     fuel: settings.fuel,
+    altitude: isNewYorkArea(selectedDestination.lat, selectedDestination.lon) ? 1200 : 2200,
     windStrength: settings.weather === "windy" ? 0.9 : settings.weather === "scattered" ? 0.2 : 0,
   });
 
@@ -309,6 +330,9 @@ function startFlight() {
   autopilotEnabled = false;
   flightCommitted = false;
   lastEventRevision = 0;
+  flightStartedAt = new Date().toISOString();
+  lastWarningSpeed = model.state.speed;
+  stallWarningActive = false;
   lastFrameTime = performance.now();
   lastMapRender = 0;
   Object.keys(controls).forEach((key) => (controls[key] = false));
@@ -318,12 +342,16 @@ function startFlight() {
   stage.dataset.weather = settings.weather;
   stage.dataset.camera = "chase";
   stage.dataset.aircraft = settings.aircraftId;
+  stage.dataset.city3d = String(isNewYorkArea(selectedDestination.lat, selectedDestination.lon));
   flightRenderer.setCameraMode("chase");
   aircraftRenderer.setAircraft(settings.aircraftId);
   aircraftRenderer.setCameraMode("chase");
   stage.classList.remove("is-paused", "is-hud-hidden");
   $("#pause-button").textContent = "Ⅱ";
   $("#autopilot-button").setAttribute("aria-pressed", "false");
+  $("#sound-button").setAttribute("aria-pressed", String(!flightAudio.muted));
+  $("#sound-button").setAttribute("aria-label", flightAudio.muted ? "Activer le son" : "Couper le son");
+  flightAudio.start(settings.aircraftId).catch(() => showMessage("Audio indisponible dans ce navigateur"));
 
   prepareBriefing();
   showScreen("flight");
@@ -337,7 +365,9 @@ function prepareBriefing() {
   const weatherNames = { clear: "Clair", scattered: "Épars", windy: "Venteux" };
   $("#briefing-overlay").classList.remove("is-hidden");
   $("#briefing-city").textContent = selectedDestination.city;
-  $("#briefing-copy").textContent = `Vol libre au-dessus de ${selectedDestination.city}. Prends une ligne, stabilise l'appareil et explore la région.`;
+  $("#briefing-copy").textContent = isNewYorkArea(selectedDestination.lat, selectedDestination.lon)
+    ? `Vol libre au-dessus de ${selectedDestination.city}. Le relief urbain OpenStreetMap est extrudé en 3D.`
+    : `Vol libre au-dessus de ${selectedDestination.city}. Prends une ligne, stabilise l'appareil et explore la région.`;
   const selectedAircraft = getAircraft(settings.aircraftId);
   $("#briefing-aircraft").textContent = selectedAircraft.shortName;
   $("#briefing-start").textContent = startNames[settings.startMode];
@@ -352,7 +382,7 @@ function bindFlightControls() {
   window.addEventListener("keydown", (event) => {
     if (currentScreen !== "flight") return;
     const key = event.key.toLowerCase();
-    const controlled = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "s", "a", "p", "c", "h", "r", "escape"];
+    const controlled = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "s", "a", "p", "c", "h", "r", "m", "k", "escape"];
     if (controlled.includes(key)) event.preventDefault();
 
     if (key === "arrowup") controls.pitchUp = true;
@@ -368,6 +398,8 @@ function bindFlightControls() {
       if (key === "p") togglePause();
       if (key === "c") changeCamera();
       if (key === "h") toggleHud();
+      if (key === "m") toggleSound();
+      if (key === "k") captureScreenshot();
       if (key === "escape") exitFlight("explore");
     }
   });
@@ -403,6 +435,12 @@ function bindFlightControls() {
   $("#autopilot-button").addEventListener("click", toggleAutopilot);
   $("#camera-button").addEventListener("click", changeCamera);
   $("#pause-button").addEventListener("click", togglePause);
+  $("#sound-button").addEventListener("click", toggleSound);
+  $("#screenshot-button").addEventListener("click", captureScreenshot);
+
+  window.addEventListener("blur", () => {
+    Object.keys(controls).forEach((key) => (controls[key] = false));
+  });
 }
 
 function flightLoop(now) {
@@ -414,6 +452,8 @@ function flightLoop(now) {
     const input = readControls();
     const state = model.step(dt, input);
     autopilotEnabled = state.autopilot;
+    flightAudio.update(state);
+    monitorFlightWarnings(state);
     renderFlight(state, now - lastMapRender > 90);
     if (now - lastMapRender > 90) lastMapRender = now;
     handleFlightEvent(state);
@@ -453,6 +493,7 @@ function renderFlight(state, renderMap = false) {
   $("#heading-side-value").textContent = String(Math.round(state.heading) % 360).padStart(3, "0");
   $("#throttle-value").textContent = numberFormat.format(state.throttle * 100);
   $("#flight-fuel-value").textContent = `${numberFormat.format(state.fuel)} %`;
+  $("#flight-fuel-caption").textContent = state.aircraftId === "ufo-x1" ? "ÉNERGIE" : "CARBURANT";
   $("#flight-status").textContent = state.autopilot ? "PILOTE AUTO" : state.airborne ? "EN VOL" : "AU SOL";
   $("#location-value").textContent = `${selectedDestination.city} · ${state.lat.toFixed(3)}, ${state.lon.toFixed(3)}`;
   $("#autopilot-button").setAttribute("aria-pressed", String(state.autopilot));
@@ -481,7 +522,34 @@ function handleFlightEvent(state) {
     "fuel-empty": "Réservoir vide — vol plané",
   };
   if (messages[state.event]) showMessage(messages[state.event]);
+  const cue = {
+    takeoff: "takeoff",
+    "autopilot-on": "autopilot",
+    "autopilot-off": "autopilot",
+    landed: "landed",
+    crashed: "crashed",
+  }[state.event];
+  if (cue) flightAudio.cue(cue);
   if (state.event === "landed" || state.event === "crashed") finishFlight(state);
+}
+
+function monitorFlightWarnings(state) {
+  const aircraft = getAircraft(state.aircraftId);
+  const stall = state.airborne && aircraft.performance.stallSpeed > 0 && state.altitude > 30 &&
+    state.speed < aircraft.performance.stallSpeed * 1.08;
+  if (stall && !stallWarningActive) {
+    stallWarningActive = true;
+    flightAudio.cue("stall");
+    showMessage("Décrochage — baisse le nez et augmente la puissance");
+  } else if (!stall) {
+    stallWarningActive = false;
+  }
+
+  if (lastWarningSpeed < 660 && state.speed >= 660) {
+    flightAudio.cue("sonic");
+    showMessage("Mach 1 — mur du son franchi");
+  }
+  lastWarningSpeed = state.speed;
 }
 
 function toggleAutopilot() {
@@ -499,6 +567,7 @@ function togglePause() {
   paused = !paused;
   $("#flight-stage").classList.toggle("is-paused", paused);
   $("#pause-button").textContent = paused ? "▶" : "Ⅱ";
+  flightAudio.setPaused(paused);
   if (!paused) lastFrameTime = performance.now();
 }
 
@@ -516,6 +585,105 @@ function toggleHud() {
   $("#flight-stage").classList.toggle("is-hud-hidden", hudHidden);
 }
 
+function toggleSound() {
+  const muted = flightAudio.toggleMute();
+  $("#sound-button").setAttribute("aria-pressed", String(!muted));
+  $("#sound-button").setAttribute("aria-label", muted ? "Activer le son" : "Couper le son");
+  showMessage(muted ? "Son coupé" : "Son activé");
+}
+
+async function captureScreenshot() {
+  if (!model) return;
+  const stage = $("#flight-stage");
+  const state = model.snapshot();
+  const width = Math.max(640, stage.clientWidth);
+  const height = Math.max(360, stage.clientHeight);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  const context = canvas.getContext("2d");
+  context.scale(dpr, dpr);
+
+  const sky = context.createLinearGradient(0, 0, 0, height);
+  const skyColors = settings.time === 23
+    ? ["#020818", "#173557"]
+    : settings.time === 6 || settings.time === 18
+      ? ["#243f66", "#dc8269"]
+      : ["#4d91c4", "#c4dce7"];
+  sky.addColorStop(0, skyColors[0]);
+  sky.addColorStop(1, skyColors[1]);
+  context.fillStyle = sky;
+  context.fillRect(0, 0, width, height);
+
+  for (const layer of [flightRenderer.getCanvas(), aircraftRenderer.getCanvas()]) {
+    if (!layer?.width || !layer?.height) continue;
+    try { context.drawImage(layer, 0, 0, width, height); } catch { /* couche indisponible */ }
+  }
+
+  const vignette = context.createRadialGradient(width / 2, height * 0.45, height * 0.08, width / 2, height * 0.5, width * 0.7);
+  vignette.addColorStop(0, "rgba(0,0,0,0)");
+  vignette.addColorStop(1, "rgba(0,7,12,.46)");
+  context.fillStyle = vignette;
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = "rgba(3,14,22,.72)";
+  context.fillRect(18, 18, 310, 70);
+  context.fillStyle = "#25d6f5";
+  context.font = "700 13px Inter, sans-serif";
+  context.fillText("AEROLINE · FLIGHT CAPTURE", 34, 42);
+  context.fillStyle = "#ffffff";
+  context.font = "700 21px Inter, sans-serif";
+  context.fillText(`${selectedDestination.city} · ${getAircraft(state.aircraftId).shortName}`, 34, 70);
+
+  const telemetry = `${numberFormat.format(state.speed)} kt   ${numberFormat.format(state.altitude)} ft   ${String(Math.round(state.heading) % 360).padStart(3, "0")}°`;
+  context.font = "700 15px Inter, sans-serif";
+  const telemetryWidth = context.measureText(telemetry).width + 32;
+  context.fillStyle = "rgba(3,14,22,.72)";
+  context.fillRect(width - telemetryWidth - 18, height - 58, telemetryWidth, 40);
+  context.fillStyle = "#ffffff";
+  context.fillText(telemetry, width - telemetryWidth - 2, height - 32);
+
+  try {
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("PNG indisponible")), "image/png");
+    });
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+      await navigator.clipboard.write([new window.ClipboardItem({ "image/png": blob })]);
+      showMessage("Capture copiée dans le presse-papiers");
+    } else {
+      downloadScreenshot(blob);
+      showMessage("Capture PNG téléchargée");
+    }
+    flightAudio.cue("screenshot");
+  } catch {
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = screenshotFilename();
+      link.click();
+      showMessage("Capture PNG téléchargée");
+    } catch {
+      showMessage("La carte distante bloque la capture dans ce navigateur");
+    }
+  }
+}
+
+function downloadScreenshot(blob) {
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.download = screenshotFilename();
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function screenshotFilename() {
+  const city = selectedDestination.city.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
+  return `aeroline-${city || "vol"}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.png`;
+}
+
 function showMessage(text) {
   const message = $("#flight-message");
   message.textContent = text;
@@ -526,8 +694,8 @@ function showMessage(text) {
 
 function finishFlight(state) {
   if (flightCommitted) return;
-  flightCommitted = true;
   paused = true;
+  flightAudio.setPaused(true);
   commitFlightStats(state);
 
   const success = state.landed;
@@ -543,16 +711,18 @@ function finishFlight(state) {
 }
 
 function exitFlight(target) {
-  if (model && !flightCommitted && model.state.elapsedSeconds > 4) commitFlightStats(model.snapshot());
+  if (model && !flightCommitted && model.state.elapsedSeconds > 4) commitFlightStats(model.snapshot(), "aborted");
   cancelAnimationFrame(animationFrame);
+  flightAudio.stop();
   model = null;
   paused = false;
   $("#briefing-overlay").classList.add("is-hidden");
   showScreen(target);
 }
 
-function commitFlightStats(state) {
-  if (flightCommitted && state.event !== "landed" && state.event !== "crashed") return;
+function commitFlightStats(state, forcedOutcome = null) {
+  if (flightCommitted) return;
+  flightCommitted = true;
   stats.flights += 1;
   stats.flightSeconds += Math.round(state.elapsedSeconds);
   const distanceKm = state.distanceNm * 1.852;
@@ -560,8 +730,27 @@ function commitFlightStats(state) {
   stats.bestDistanceKm = Math.max(stats.bestDistanceKm, distanceKm);
   if (state.landed) stats.landings += 1;
   if (state.crashed) stats.crashes += 1;
+  const aircraft = getAircraft(state.aircraftId);
+  const outcome = forcedOutcome ?? (state.landed ? "landed" : state.crashed ? "crashed" : "completed");
+  flightHistory.unshift({
+    id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.round(state.distanceNm * 1000)}`,
+    startedAt: flightStartedAt ?? new Date(Date.now() - state.elapsedSeconds * 1000).toISOString(),
+    city: selectedDestination.city,
+    country: selectedDestination.country,
+    lat: selectedDestination.lat,
+    lon: selectedDestination.lon,
+    heading: selectedDestination.heading ?? 0,
+    aircraftId: aircraft.id,
+    aircraftName: aircraft.shortName,
+    durationSeconds: Math.round(state.elapsedSeconds),
+    distanceKm,
+    maxAltitude: Math.round(state.maxAltitude ?? state.altitude),
+    maxSpeed: Math.round(state.maxSpeed ?? state.speed),
+    outcome,
+  });
+  flightHistory = flightHistory.slice(0, MAX_HISTORY_ENTRIES);
   saveStats();
-  flightCommitted = true;
+  saveFlightHistory();
 }
 
 function updateStatsUi() {
@@ -582,6 +771,7 @@ function updateStatsUi() {
   const completed = Number(stats.flights > 0) + Number(stats.landings > 0) + Number(stats.distanceKm >= 25);
   $("#training-count").textContent = `${completed} / 3`;
   $("#training-progress").style.width = `${(completed / 3) * 100}%`;
+  renderFlightHistory();
 }
 
 function setBadge(selector, done) {
@@ -611,6 +801,99 @@ function saveStats() {
   } catch {
     // La simulation reste jouable si le stockage est bloqué par le navigateur.
   }
+}
+
+function loadFlightHistory() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((entry) => entry && Number.isFinite(Number(entry.lat)) && Number.isFinite(Number(entry.lon)))
+      .slice(0, MAX_HISTORY_ENTRIES);
+  } catch {
+    return [];
+  }
+}
+
+function saveFlightHistory() {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(flightHistory));
+  } catch {
+    // Le carnet détaillé est optionnel si le stockage local est indisponible.
+  }
+}
+
+function renderFlightHistory() {
+  const container = $("#flight-history");
+  container.replaceChildren();
+  $("#history-clear").disabled = flightHistory.length === 0;
+  if (!flightHistory.length) {
+    const empty = document.createElement("p");
+    empty.className = "history-empty";
+    empty.textContent = "Les prochains vols apparaîtront ici avec leur lieu, appareil, durée et résultat.";
+    container.append(empty);
+    return;
+  }
+
+  const outcomeLabels = {
+    landed: "POSÉ",
+    crashed: "CRASH",
+    aborted: "INTERROMPU",
+    completed: "TERMINÉ",
+  };
+  flightHistory.slice(0, 8).forEach((entry) => {
+    const article = document.createElement("article");
+    article.className = "history-flight";
+    article.innerHTML = `
+      <header><div><h3></h3><time></time></div><span class="history-result"></span></header>
+      <dl>
+        <div><dt>Appareil</dt><dd data-history-aircraft></dd></div>
+        <div><dt>Durée</dt><dd data-history-duration></dd></div>
+        <div><dt>Distance</dt><dd data-history-distance></dd></div>
+      </dl>
+      <small data-history-performance></small>
+      <button class="history-replay" type="button" data-history-replay>REJOUER CE VOL</button>`;
+    $("h3", article).textContent = String(entry.city || "Vol");
+    $("time", article).textContent = formatFlightDate(entry.startedAt);
+    const result = $(".history-result", article);
+    result.textContent = outcomeLabels[entry.outcome] ?? outcomeLabels.completed;
+    result.classList.add(`is-${entry.outcome || "completed"}`);
+    $("[data-history-aircraft]", article).textContent = String(entry.aircraftName || getAircraft(entry.aircraftId).shortName);
+    $("[data-history-duration]", article).textContent = formatDuration(Number(entry.durationSeconds) || 0);
+    $("[data-history-distance]", article).textContent = `${Number(entry.distanceKm || 0).toFixed(1)} km`;
+    $("[data-history-performance]", article).textContent = `Max ${numberFormat.format(Number(entry.maxSpeed) || 0)} kt · ${numberFormat.format(Number(entry.maxAltitude) || 0)} ft`;
+    $("[data-history-replay]", article).dataset.historyReplay = String(entry.id);
+    container.append(article);
+  });
+}
+
+function clearFlightHistory() {
+  if (!flightHistory.length || !window.confirm("Effacer l'historique détaillé des vols ?")) return;
+  flightHistory = [];
+  saveFlightHistory();
+  renderFlightHistory();
+}
+
+function replayHistoryFlight(id) {
+  const entry = flightHistory.find((item) => String(item.id) === String(id));
+  if (!entry) return;
+  selectDestination({
+    id: `history-${entry.id}`,
+    city: String(entry.city || "Vol précédent"),
+    country: String(entry.country || formatCoordinates(Number(entry.lat), Number(entry.lon))),
+    lat: Number(entry.lat),
+    lon: Number(entry.lon),
+    heading: Number(entry.heading) || 0,
+    visits: "Historique",
+    accent: "#25d6f5",
+  });
+  selectAircraft(entry.aircraftId);
+  showScreen("explore");
+}
+
+function formatFlightDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Date inconnue" : flightDateFormat.format(date);
 }
 
 function destinationFromUrl() {

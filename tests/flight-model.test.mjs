@@ -6,6 +6,7 @@ import { aircraftPitchRotation } from "../src/aircraft-renderer.js";
 import { FlightModel, shortestAngle } from "../src/flight-model.js";
 import {
   TERRAIN_EXAGGERATION,
+  isNewYorkArea,
   shouldUpdateTerrainCamera,
   terrainCameraForAltitude,
   terrainZoomForAltitude,
@@ -78,6 +79,25 @@ test("le roulis modifie progressivement le cap", () => {
   assert.ok(state.heading > 3);
 });
 
+test("les appareils hautes performances virent nettement plus vite", () => {
+  const trainer = new FlightModel({ startMode: "airborne", aircraftId: "al-182", heading: 0 });
+  const fighter = new FlightModel({ startMode: "airborne", aircraftId: "fx-19", heading: 0 });
+  const ufo = new FlightModel({ startMode: "airborne", aircraftId: "ufo-x1", heading: 0 });
+  const trainerTurn = advance(trainer, 3, { roll: 1 }).heading;
+  const fighterTurn = advance(fighter, 3, { roll: 1 }).heading;
+  const ufoTurn = advance(ufo, 3, { roll: 1 }).heading;
+  assert.ok(fighterTurn > trainerTurn * 2);
+  assert.ok(ufoTurn > fighterTurn * 1.5);
+});
+
+test("sans commande de tangage l'appareil conserve son altitude", () => {
+  const model = new FlightModel({ startMode: "airborne", altitude: 3200, aircraftId: "sj-42" });
+  const state = advance(model, 30);
+  assert.ok(Math.abs(state.altitude - 3200) < 2);
+  assert.ok(Math.abs(state.verticalSpeed) < 2);
+  assert.ok(Math.abs(state.pitch) < 0.01);
+});
+
 test("le pilote automatique rejoint le cap et l'altitude cibles", () => {
   const model = new FlightModel({ startMode: "airborne", heading: 10, altitude: 2000 });
   model.setAutopilot(true);
@@ -134,4 +154,10 @@ test("la caméra de terrain ignore les micro-variations qui faisaient scintiller
   assert.equal(shouldUpdateTerrainCamera(camera, { ...camera }), false);
   assert.equal(shouldUpdateTerrainCamera(camera, { ...camera, lon: camera.lon + 1e-8 }), false);
   assert.equal(shouldUpdateTerrainCamera(camera, { ...camera, lon: camera.lon + 1e-5 }), true);
+});
+
+test("les immeubles 3D ne s'activent que dans la région de New York", () => {
+  assert.equal(isNewYorkArea(40.7128, -74.006), true);
+  assert.equal(isNewYorkArea(46.5197, 6.6323), false);
+  assert.equal(isNewYorkArea(25.2048, 55.2708), false);
 });

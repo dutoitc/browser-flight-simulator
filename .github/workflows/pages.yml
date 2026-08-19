@@ -31,6 +31,7 @@ jobs:
           node --check src/aircraft-renderer.js
           node --check src/aircrafts.js
           node --check src/destinations.js
+          node --check src/flight-audio.js
           node --check src/flight-model.js
           node --check src/map-renderer.js
           node --check src/terrain-renderer.js
